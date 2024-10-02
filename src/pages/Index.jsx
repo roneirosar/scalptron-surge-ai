@@ -9,7 +9,9 @@ const Index = () => {
         <h1 className="text-3xl font-bold mb-8">IA de Scalping Trading</h1>
         <div className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">Mapa do Projeto</h2>
-          <TradingAIRoadmap />
+          <div className="h-[500px] w-full">
+            <TradingAIRoadmap />
+          </div>
         </div>
         <ScalpingAI />
       </div>

@@ -17,19 +17,15 @@ const fetchMarketData = async () => {
   });
 };
 
-// Simulated AI prediction (replace with real ML model later)
-const predictTrade = (data) => {
-  const lastPrice = data[data.length - 1].price;
-  const prevPrice = data[data.length - 2].price;
-  return {
-    action: lastPrice > prevPrice ? 'Buy' : 'Sell',
-    confidence: Math.random() * 0.5 + 0.5, // 50-100% confidence
-    targetPrice: lastPrice * (1 + (Math.random() - 0.5) * 0.002)
-  };
+const calculateProfit = (entryPrice, exitPrice, action) => {
+  const difference = action === 'Buy' ? exitPrice - entryPrice : entryPrice - exitPrice;
+  return difference * 100000; // Assuming a standard lot size of 100,000 units
 };
 
 const ScalpingAI = () => {
   const [trades, setTrades] = useState([]);
+  const [totalProfit, setTotalProfit] = useState(0);
+  const [winRate, setWinRate] = useState(0);
 
   const { data: marketData, isLoading, error } = useQuery({
     queryKey: ['marketData'],
@@ -41,15 +37,46 @@ const ScalpingAI = () => {
     if (marketData && marketData.length > 1) {
       const prediction = predictTrade(marketData);
       if (prediction.confidence > 0.9) { // Only trade with high confidence
-        setTrades(prevTrades => [...prevTrades, {
+        const newTrade = {
           time: new Date().toISOString(),
           action: prediction.action,
           entryPrice: marketData[marketData.length - 1].price,
-          targetPrice: prediction.targetPrice
-        }]);
+          targetPrice: prediction.targetPrice,
+          exitPrice: null,
+          profit: null,
+        };
+        setTrades(prevTrades => [...prevTrades, newTrade]);
       }
     }
   }, [marketData]);
+
+  useEffect(() => {
+    // Simulate trade closure after 5 seconds
+    const timer = setTimeout(() => {
+      setTrades(prevTrades => 
+        prevTrades.map(trade => {
+          if (trade.exitPrice === null) {
+            const exitPrice = trade.entryPrice + (Math.random() - 0.5) * 0.0010; // Random price movement
+            const profit = calculateProfit(trade.entryPrice, exitPrice, trade.action);
+            return { ...trade, exitPrice, profit };
+          }
+          return trade;
+        })
+      );
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [trades]);
+
+  useEffect(() => {
+    const closedTrades = trades.filter(trade => trade.exitPrice !== null);
+    const totalProfit = closedTrades.reduce((sum, trade) => sum + trade.profit, 0);
+    const winningTrades = closedTrades.filter(trade => trade.profit > 0);
+    const winRate = closedTrades.length > 0 ? (winningTrades.length / closedTrades.length) * 100 : 0;
+
+    setTotalProfit(totalProfit);
+    setWinRate(winRate);
+  }, [trades]);
 
   if (isLoading) return <div>Carregando dados do mercado...</div>;
   if (error) return <div>Erro ao carregar dados: {error.message}</div>;
@@ -86,6 +113,14 @@ const ScalpingAI = () => {
                   {trade.action}
                 </span>
                 {' '}at {trade.entryPrice.toFixed(5)} - Target: {trade.targetPrice.toFixed(5)}
+                {trade.exitPrice && (
+                  <span>
+                    {' '}- Exit: {trade.exitPrice.toFixed(5)}
+                    {' '}- Profit: <span className={trade.profit > 0 ? 'text-green-500' : 'text-red-500'}>
+                      ${trade.profit.toFixed(2)}
+                    </span>
+                  </span>
+                )}
               </li>
             ))}
           </ul>
@@ -98,8 +133,10 @@ const ScalpingAI = () => {
         </CardHeader>
         <CardContent>
           <p>Total de trades: {trades.length}</p>
-          <p>Assertividade: Simulada (90%+)</p>
-          <p>Lucro/Perda: Simulado</p>
+          <p>Trades fechados: {trades.filter(trade => trade.exitPrice !== null).length}</p>
+          <p>Win rate: {winRate.toFixed(2)}%</p>
+          <p>Lucro/Perda total: ${totalProfit.toFixed(2)}</p>
+          <p>Média de lucro por trade: ${(totalProfit / trades.length || 0).toFixed(2)}</p>
         </CardContent>
       </Card>
     </div>
