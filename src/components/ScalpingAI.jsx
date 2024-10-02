@@ -22,6 +22,17 @@ const calculateProfit = (entryPrice, exitPrice, action) => {
   return difference * 100000; // Assuming a standard lot size of 100,000 units
 };
 
+// New function to predict trades
+const predictTrade = (marketData) => {
+  const lastPrice = marketData[marketData.length - 1].price;
+  const secondLastPrice = marketData[marketData.length - 2].price;
+  const action = lastPrice > secondLastPrice ? 'Buy' : 'Sell';
+  const confidence = Math.random(); // Simulated confidence level
+  const targetPrice = action === 'Buy' ? lastPrice * (1 + Math.random() * 0.001) : lastPrice * (1 - Math.random() * 0.001);
+  
+  return { action, confidence, targetPrice };
+};
+
 const ScalpingAI = () => {
   const [trades, setTrades] = useState([]);
   const [totalProfit, setTotalProfit] = useState(0);
