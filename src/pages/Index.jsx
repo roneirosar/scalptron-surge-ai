@@ -3,13 +3,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import TradingAIRoadmap from '../components/TradingAIRoadmap';
 import TradingAITimeline from '../components/TradingAITimeline';
 import TradingAIOrganogram from '../components/TradingAIOrganogram';
+import ProjectDashboard from '../components/ProjectDashboard';
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <h1 className="text-4xl font-bold mb-8 text-center">ScalpTron: IA Autônoma de Scalping Trading</h1>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+      <ProjectDashboard />
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
         <Card>
           <CardHeader>
             <CardTitle>Mapa Mental do Projeto</CardTitle>
@@ -29,7 +32,7 @@ const Index = () => {
         </Card>
       </div>
       
-      <Card className="mb-8">
+      <Card className="mt-8">
         <CardHeader>
           <CardTitle>Organograma da IA</CardTitle>
         </CardHeader>
@@ -38,7 +41,7 @@ const Index = () => {
         </CardContent>
       </Card>
       
-      <Card>
+      <Card className="mt-8">
         <CardHeader>
           <CardTitle>Visão Geral do Projeto</CardTitle>
         </CardHeader>
