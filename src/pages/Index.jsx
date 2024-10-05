@@ -1,9 +1,11 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import TradingAIRoadmap from '../components/TradingAIRoadmap';
 import TradingAITimeline from '../components/TradingAITimeline';
 import TradingAIOrganogram from '../components/TradingAIOrganogram';
 import ProjectDashboard from '../components/ProjectDashboard';
+import AIConstructionFlowchart from '../components/AIConstructionFlowchart';
+import AIOperationFlowchart from '../components/AIOperationFlowchart';
+import AIDecisionProcess from '../components/AIDecisionProcess';
 
 const Index = () => {
   return (
@@ -15,22 +17,40 @@ const Index = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
         <Card>
           <CardHeader>
-            <CardTitle>Mapa Mental do Projeto</CardTitle>
+            <CardTitle>Fluxograma de Construção da IA</CardTitle>
           </CardHeader>
           <CardContent>
-            <TradingAIRoadmap />
+            <AIConstructionFlowchart />
           </CardContent>
         </Card>
         
         <Card>
           <CardHeader>
-            <CardTitle>Cronograma de Desenvolvimento</CardTitle>
+            <CardTitle>Fluxograma de Operação da IA</CardTitle>
           </CardHeader>
           <CardContent>
-            <TradingAITimeline />
+            <AIOperationFlowchart />
           </CardContent>
         </Card>
       </div>
+      
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle>Processo de Tomada de Decisão da IA</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <AIDecisionProcess />
+        </CardContent>
+      </Card>
+      
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle>Cronograma de Desenvolvimento</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <TradingAITimeline />
+        </CardContent>
+      </Card>
       
       <Card className="mt-8">
         <CardHeader>
@@ -47,7 +67,7 @@ const Index = () => {
         </CardHeader>
         <CardContent>
           <p className="text-lg">
-            ScalpTron é uma IA totalmente autônoma projetada para ser a mais acertiva e lucrativa plataforma de Scalping Trading do mundo. Nossa IA integra análise de dados em tempo real, aprendizado de máquina avançado e estratégias de trading otimizadas para maximizar os lucros e minimizar os riscos.
+            ScalpTron é uma IA totalmente autônoma projetada para ser a mais assertiva e lucrativa plataforma de Scalping Trading do mundo. Nossa IA integra análise de dados em tempo real, aprendizado de máquina avançado e estratégias de trading otimizadas para maximizar os lucros e minimizar os riscos.
           </p>
           <ul className="list-disc list-inside mt-4">
             <li>Coleta e processamento de dados em tempo real</li>
