@@ -1,25 +1,34 @@
 import nltk
 from nltk.sentiment import SentimentIntensityAnalyzer
-import requests
-from bs4 import BeautifulSoup
+import MetaTrader5 as mt5
 
 nltk.download('vader_lexicon')
 
-def fetch_news(symbol):
-    # Simulated news fetching - replace with actual API call
-    url = f"https://example.com/finance/news/{symbol}"
-    response = requests.get(url)
-    soup = BeautifulSoup(response.text, 'html.parser')
-    news_items = soup.find_all('div', class_='news-item')
-    return [item.text for item in news_items]
+def initialize_mt5():
+    if not mt5.initialize():
+        print("Falha ao inicializar o MetaTrader 5")
+        mt5.shutdown()
+        return False
+    return True
+
+def fetch_news():
+    if not initialize_mt5():
+        return []
+    
+    news = mt5.news_get()
+    mt5.shutdown()
+    return news
 
 def analyze_sentiment(text):
     sia = SentimentIntensityAnalyzer()
     return sia.polarity_scores(text)
 
-def get_market_sentiment(symbol):
-    news_items = fetch_news(symbol)
-    sentiments = [analyze_sentiment(item) for item in news_items]
+def get_market_sentiment():
+    news_items = fetch_news()
+    if not news_items:
+        return "Neutral"
+    
+    sentiments = [analyze_sentiment(item.headline) for item in news_items]
     avg_sentiment = sum(s['compound'] for s in sentiments) / len(sentiments)
     
     if avg_sentiment > 0.05:

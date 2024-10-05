@@ -26,7 +26,7 @@ async def get_market_data():
     signals = generate_signals(processed_data)
     prediction = predict_market_movement(processed_data)
     risk_assessment = assess_risk(processed_data, signals, prediction)
-    market_sentiment = get_market_sentiment("EURUSD")  # Assumindo que estamos trabalhando com EURUSD
+    market_sentiment = get_market_sentiment()
     
     return {
         "market_data": processed_data.to_dict(orient="records"),
