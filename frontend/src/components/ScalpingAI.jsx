@@ -4,6 +4,7 @@ import MarketDataChart from './MarketDataChart';
 import TradesList from './TradesList';
 import TradingStatistics from './TradingStatistics';
 import AIDecisionExplanation from './AIDecisionExplanation';
+import MarketSentiment from './MarketSentiment';  // Novo componente
 import { fetchMarketData } from '../utils/apiService';
 
 const ScalpingAI = () => {
@@ -35,10 +36,13 @@ const ScalpingAI = () => {
       <h1 className="text-2xl font-bold mb-4">ScalpTron: IA de Scalping Trading</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <MarketDataChart marketData={marketData?.market_data || []} />
-        <AIDecisionExplanation 
-          prediction={marketData?.prediction}
-          riskAssessment={marketData?.risk_assessment}
-        />
+        <div>
+          <AIDecisionExplanation 
+            prediction={marketData?.prediction}
+            riskAssessment={marketData?.risk_assessment}
+          />
+          <MarketSentiment sentiment={marketData?.market_sentiment} />
+        </div>
       </div>
       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
         <TradesList trades={trades} />
