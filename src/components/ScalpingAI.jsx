@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
-import { AlertCircle, TrendingUp, DollarSign } from 'lucide-react';
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import MarketDataChart from './MarketDataChart';
+import TradesList from './TradesList';
+import TradingStatistics from './TradingStatistics';
 
-// Simulated market data fetching (replace with real API later)
 const fetchMarketData = async () => {
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -22,7 +20,6 @@ const calculateProfit = (entryPrice, exitPrice, action) => {
   return difference * 100000; // Assuming a standard lot size of 100,000 units
 };
 
-// New function to predict trades
 const predictTrade = (marketData) => {
   const lastPrice = marketData[marketData.length - 1].price;
   const secondLastPrice = marketData[marketData.length - 2].price;
@@ -95,61 +92,9 @@ const ScalpingAI = () => {
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">IA de Scalping Trading</h1>
-      
-      <Card className="mb-4">
-        <CardHeader>
-          <CardTitle>Dados do Mercado em Tempo Real</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <LineChart width={600} height={300} data={marketData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="time" />
-            <YAxis domain={['auto', 'auto']} />
-            <Tooltip />
-            <Legend />
-            <Line type="monotone" dataKey="price" stroke="#8884d8" dot={false} />
-          </LineChart>
-        </CardContent>
-      </Card>
-
-      <Card className="mb-4">
-        <CardHeader>
-          <CardTitle>Trades Executados</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul>
-            {trades.map((trade, index) => (
-              <li key={index} className="mb-2">
-                <span className={`font-bold ${trade.action === 'Buy' ? 'text-green-500' : 'text-red-500'}`}>
-                  {trade.action}
-                </span>
-                {' '}at {trade.entryPrice.toFixed(5)} - Target: {trade.targetPrice.toFixed(5)}
-                {trade.exitPrice && (
-                  <span>
-                    {' '}- Exit: {trade.exitPrice.toFixed(5)}
-                    {' '}- Profit: <span className={trade.profit > 0 ? 'text-green-500' : 'text-red-500'}>
-                      ${trade.profit.toFixed(2)}
-                    </span>
-                  </span>
-                )}
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Estatísticas</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p>Total de trades: {trades.length}</p>
-          <p>Trades fechados: {trades.filter(trade => trade.exitPrice !== null).length}</p>
-          <p>Win rate: {winRate.toFixed(2)}%</p>
-          <p>Lucro/Perda total: ${totalProfit.toFixed(2)}</p>
-          <p>Média de lucro por trade: ${(totalProfit / trades.length || 0).toFixed(2)}</p>
-        </CardContent>
-      </Card>
+      <MarketDataChart marketData={marketData} />
+      <TradesList trades={trades} />
+      <TradingStatistics trades={trades} totalProfit={totalProfit} winRate={winRate} />
     </div>
   );
 };
