@@ -6,15 +6,47 @@ import ProjectDashboard from '../components/ProjectDashboard';
 import AIConstructionFlowchart from '../components/AIConstructionFlowchart';
 import AIOperationFlowchart from '../components/AIOperationFlowchart';
 import AIDecisionProcess from '../components/AIDecisionProcess';
+import ScalpingAI from '../components/ScalpingAI';
+import LSTMModel from '../components/LSTMModel';
+import RiskManagement from '../components/RiskManagement';
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <h1 className="text-4xl font-bold mb-8 text-center">ScalpTron: IA Autônoma de Scalping Trading</h1>
       
-      <ProjectDashboard />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Dashboard de Trading em Tempo Real</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ScalpingAI />
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Modelo LSTM e Previsões</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <LSTMModel marketData={[]} /> {/* You'll need to pass actual market data here */}
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Gerenciamento de Risco</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RiskManagement marketData={[]} currentPosition={null} /> {/* Pass actual data and position */}
+          </CardContent>
+        </Card>
+        
+        <ProjectDashboard />
+      </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
         <Card>
           <CardHeader>
             <CardTitle>Fluxograma de Construção da IA</CardTitle>
@@ -43,23 +75,25 @@ const Index = () => {
         </CardContent>
       </Card>
       
-      <Card className="mt-8">
-        <CardHeader>
-          <CardTitle>Cronograma de Desenvolvimento</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <TradingAITimeline />
-        </CardContent>
-      </Card>
-      
-      <Card className="mt-8">
-        <CardHeader>
-          <CardTitle>Organograma da IA</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <TradingAIOrganogram />
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Cronograma de Desenvolvimento</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TradingAITimeline />
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Organograma da IA</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TradingAIOrganogram />
+          </CardContent>
+        </Card>
+      </div>
       
       <Card className="mt-8">
         <CardHeader>
