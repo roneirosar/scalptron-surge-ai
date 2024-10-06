@@ -2,7 +2,7 @@ import { calculateTechnicalIndicators } from './technicalIndicators';
 import { assessRisk } from './riskManagement';
 import { analyzeMarketSentiment } from './sentimentAnalysis';
 
-export const makeTradeDecision = (marketData) => {
+export const makeTradeDecision = (marketData, lstmPrediction) => {
   const latestData = marketData[marketData.length - 1];
   const indicators = calculateTechnicalIndicators(marketData);
   const riskAssessment = assessRisk(marketData, indicators);
@@ -12,15 +12,18 @@ export const makeTradeDecision = (marketData) => {
   let reason = '';
   let confidence = 0;
 
-  // Lógica de decisão aprimorada
-  if (indicators.rsi < 30 && indicators.macdHistogram > 0 && indicators.adx > 25) {
+  // Lógica de decisão aprimorada com LSTM
+  const priceDifference = lstmPrediction - latestData.close;
+  const priceChangePercent = (priceDifference / latestData.close) * 100;
+
+  if (priceChangePercent > 0.1 && indicators.rsi < 70 && indicators.macdHistogram > 0) {
     action = 'BUY';
-    reason = 'RSI indica sobrevendido, MACD é positivo, e ADX mostra tendência forte.';
-    confidence = 0.7;
-  } else if (indicators.rsi > 70 && indicators.macdHistogram < 0 && indicators.adx > 25) {
+    reason = 'LSTM prevê aumento de preço, RSI não está sobrecomprado, e MACD é positivo.';
+    confidence = 0.8;
+  } else if (priceChangePercent < -0.1 && indicators.rsi > 30 && indicators.macdHistogram < 0) {
     action = 'SELL';
-    reason = 'RSI indica sobrecomprado, MACD é negativo, e ADX mostra tendência forte.';
-    confidence = 0.7;
+    reason = 'LSTM prevê queda de preço, RSI não está sobrevendido, e MACD é negativo.';
+    confidence = 0.8;
   }
 
   // Ajuste baseado no sentimento do mercado
@@ -43,6 +46,7 @@ export const makeTradeDecision = (marketData) => {
     confidence,
     indicators,
     riskAssessment,
-    marketSentiment
+    marketSentiment,
+    lstmPrediction
   };
 };

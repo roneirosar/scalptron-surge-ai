@@ -4,38 +4,30 @@ import MarketDataChart from './MarketDataChart';
 import TradesList from './TradesList';
 import TradingStatistics from './TradingStatistics';
 import AIDecisionExplanation from './AIDecisionExplanation';
-import AdvancedTradingChart from './AdvancedTradingChart';
-import { makeTradeDecision } from '../utils/aiDecisionMaker';
-import { fetchMarketData } from '../data/dataFetcher';
-import { processMarketData } from '../data/dataProcessor';
+import MarketSentiment from './MarketSentiment';
+import LSTMModel from './LSTMModel';
+import { fetchMarketData } from '../utils/apiService';
 
 const ScalpingAI = () => {
   const [trades, setTrades] = useState([]);
-  const [aiDecision, setAiDecision] = useState(null);
 
-  const { data: rawMarketData, isLoading, error } = useQuery({
+  const { data: marketData, isLoading, error } = useQuery({
     queryKey: ['marketData'],
     queryFn: fetchMarketData,
-    refetchInterval: 1000,
+    refetchInterval: 5000, // Refetch every 5 seconds
   });
 
   useEffect(() => {
-    if (rawMarketData) {
-      const processedData = processMarketData(rawMarketData);
-      const decision = makeTradeDecision(processedData);
-      setAiDecision(decision);
-
-      if (decision.action !== 'HOLD') {
-        const newTrade = {
-          time: new Date().toISOString(),
-          action: decision.action,
-          price: processedData[processedData.length - 1].price,
-          reason: decision.reason,
-        };
-        setTrades(prevTrades => [...prevTrades, newTrade]);
-      }
+    if (marketData && marketData.signals) {
+      const newTrades = marketData.signals.map(signal => ({
+        time: signal.timestamp,
+        action: signal.action,
+        price: signal.price,
+        reason: signal.reason,
+      }));
+      setTrades(prevTrades => [...prevTrades, ...newTrades]);
     }
-  }, [rawMarketData]);
+  }, [marketData]);
 
   if (isLoading) return <div>Carregando dados do mercado...</div>;
   if (error) return <div>Erro ao carregar dados: {error.message}</div>;
@@ -44,8 +36,15 @@ const ScalpingAI = () => {
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">ScalpTron: IA de Scalping Trading</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <AdvancedTradingChart marketData={rawMarketData} trades={trades} />
-        <AIDecisionExplanation decision={aiDecision} />
+        <MarketDataChart marketData={marketData?.market_data || []} />
+        <div>
+          <AIDecisionExplanation 
+            prediction={marketData?.prediction}
+            riskAssessment={marketData?.risk_assessment}
+          />
+          <MarketSentiment sentiment={marketData?.market_sentiment} />
+          <LSTMModel marketData={marketData?.market_data || []} />
+        </div>
       </div>
       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
         <TradesList trades={trades} />
