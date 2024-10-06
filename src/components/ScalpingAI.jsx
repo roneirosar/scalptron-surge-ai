@@ -39,7 +39,7 @@ const ScalpingAI = () => {
         }
       }
     }
-  }, [marketData]);
+  }, [marketData, currentPosition]);
 
   if (isLoading) return <div>Carregando dados do mercado...</div>;
   if (error) return <div>Erro ao carregar dados: {error.message}</div>;
