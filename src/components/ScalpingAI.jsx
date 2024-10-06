@@ -7,11 +7,14 @@ import AIDecisionExplanation from './AIDecisionExplanation';
 import MarketSentiment from './MarketSentiment';
 import LSTMModel from './LSTMModel';
 import RiskManagement from './RiskManagement';
+import AutomatedTrading from './AutomatedTrading';
 import { fetchMarketData } from '../utils/apiService';
 
 const ScalpingAI = () => {
   const [trades, setTrades] = useState([]);
   const [currentPosition, setCurrentPosition] = useState(null);
+  const [lstmPrediction, setLstmPrediction] = useState(null);
+  const [riskMetrics, setRiskMetrics] = useState(null);
 
   const { data: marketData, isLoading, error } = useQuery({
     queryKey: ['marketData'],
@@ -55,10 +58,19 @@ const ScalpingAI = () => {
             riskAssessment={marketData?.risk_assessment}
           />
           <MarketSentiment sentiment={marketData?.market_sentiment} />
-          <LSTMModel marketData={marketData?.market_data || []} />
+          <LSTMModel 
+            marketData={marketData?.market_data || []}
+            onPredictionUpdate={setLstmPrediction}
+          />
           <RiskManagement 
             marketData={marketData?.market_data || []}
             currentPosition={currentPosition}
+            onRiskMetricsUpdate={setRiskMetrics}
+          />
+          <AutomatedTrading
+            marketData={marketData?.market_data || []}
+            lstmPrediction={lstmPrediction}
+            riskMetrics={riskMetrics}
           />
         </div>
       </div>
