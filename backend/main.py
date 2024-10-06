@@ -21,20 +21,23 @@ app.add_middleware(
 
 @app.get("/market-data")
 async def get_market_data():
-    raw_data = await fetch_market_data()
-    processed_data = process_data(raw_data)
-    signals = generate_signals(processed_data)
-    prediction = predict_market_movement(processed_data)
-    risk_assessment = assess_risk(processed_data, signals, prediction)
-    market_sentiment = get_market_sentiment()
-    
-    return {
-        "market_data": processed_data.to_dict(orient="records"),
-        "signals": signals,
-        "prediction": prediction,
-        "risk_assessment": risk_assessment,
-        "market_sentiment": market_sentiment
-    }
+    try:
+        raw_data = await fetch_market_data()
+        processed_data = process_data(raw_data)
+        signals = generate_signals(processed_data)
+        prediction = predict_market_movement(processed_data)
+        risk_assessment = assess_risk(processed_data, signals, prediction)
+        market_sentiment = get_market_sentiment()
+        
+        return {
+            "market_data": processed_data.to_dict(orient="records"),
+            "signals": signals.to_dict(orient="records"),
+            "prediction": prediction,
+            "risk_assessment": risk_assessment,
+            "market_sentiment": market_sentiment
+        }
+    except Exception as e:
+        return {"error": str(e)}
 
 if __name__ == "__main__":
     import uvicorn

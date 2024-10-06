@@ -2,19 +2,10 @@ import pandas as pd
 import numpy as np
 
 def process_data(df):
-    # Ensure 'timestamp' is in datetime format
-    df['timestamp'] = pd.to_datetime(df['timestamp'])
-    
-    # Sort DataFrame by timestamp
-    df = df.sort_values('timestamp')
-    
-    # Calculate returns
-    df['returns'] = df['close'].pct_change()
-    
     # Calculate technical indicators
-    df['sma_20'] = df['close'].rolling(window=20).mean()
-    df['sma_50'] = df['close'].rolling(window=50).mean()
-    df['rsi'] = calculate_rsi(df['close'])
+    df['SMA_20'] = df['close'].rolling(window=20).mean()
+    df['SMA_50'] = df['close'].rolling(window=50).mean()
+    df['RSI'] = calculate_rsi(df['close'])
     
     return df
 
