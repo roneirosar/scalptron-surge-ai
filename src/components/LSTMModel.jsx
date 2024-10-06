@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const LSTMModel = ({ marketData }) => {
   const [prediction, setPrediction] = useState(null);
+  const [confidence, setConfidence] = useState(null);
 
   useEffect(() => {
     const trainAndPredict = async () => {
@@ -17,7 +18,7 @@ const LSTMModel = ({ marketData }) => {
       const normalizedData = tensorData.sub(dataMean).div(dataStd);
       
       // Criar sequências para treinamento
-      const sequenceLength = 10;
+      const sequenceLength = 20;
       const [xs, ys] = tf.tidy(() => {
         const sequences = [];
         const targets = [];
@@ -30,11 +31,24 @@ const LSTMModel = ({ marketData }) => {
       
       // Criar e treinar o modelo
       const model = tf.sequential();
-      model.add(tf.layers.lstm({ units: 50, inputShape: [sequenceLength, 1] }));
+      model.add(tf.layers.lstm({ units: 100, returnSequences: true, inputShape: [sequenceLength, 1] }));
+      model.add(tf.layers.dropout(0.2));
+      model.add(tf.layers.lstm({ units: 50, returnSequences: false }));
+      model.add(tf.layers.dropout(0.2));
       model.add(tf.layers.dense({ units: 1 }));
-      model.compile({ optimizer: 'adam', loss: 'meanSquaredError' });
       
-      await model.fit(xs, ys, { epochs: 50, batchSize: 32 });
+      model.compile({ 
+        optimizer: tf.train.adam(0.001),
+        loss: 'meanSquaredError',
+        metrics: ['mse']
+      });
+      
+      await model.fit(xs, ys, { 
+        epochs: 100, 
+        batchSize: 32,
+        validationSplit: 0.1,
+        callbacks: tf.callbacks.earlyStopping({ monitor: 'val_loss', patience: 10 })
+      });
       
       // Fazer uma previsão
       const lastSequence = normalizedData.slice([-sequenceLength]).reshape([1, sequenceLength, 1]);
@@ -42,6 +56,11 @@ const LSTMModel = ({ marketData }) => {
       const predictedValue = predictedNormalized.mul(dataStd).add(dataMean);
       
       setPrediction(predictedValue.dataSync()[0]);
+      
+      // Calcular intervalo de confiança
+      const mse = model.evaluate(xs, ys)[0].dataSync()[0];
+      const confidenceInterval = 1.96 * Math.sqrt(mse);
+      setConfidence(confidenceInterval);
     };
     
     if (marketData && marketData.length > 0) {
@@ -52,11 +71,14 @@ const LSTMModel = ({ marketData }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Previsão LSTM</CardTitle>
+        <CardTitle>Previsão LSTM Avançada</CardTitle>
       </CardHeader>
       <CardContent>
         {prediction ? (
-          <p>Próximo preço previsto: {prediction.toFixed(2)}</p>
+          <>
+            <p>Próximo preço previsto: {prediction.toFixed(2)}</p>
+            <p>Intervalo de confiança: ±{confidence.toFixed(2)}</p>
+          </>
         ) : (
           <p>Treinando modelo...</p>
         )}

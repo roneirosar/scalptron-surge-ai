@@ -6,10 +6,12 @@ import TradingStatistics from './TradingStatistics';
 import AIDecisionExplanation from './AIDecisionExplanation';
 import MarketSentiment from './MarketSentiment';
 import LSTMModel from './LSTMModel';
+import RiskManagement from './RiskManagement';
 import { fetchMarketData } from '../utils/apiService';
 
 const ScalpingAI = () => {
   const [trades, setTrades] = useState([]);
+  const [currentPosition, setCurrentPosition] = useState(null);
 
   const { data: marketData, isLoading, error } = useQuery({
     queryKey: ['marketData'],
@@ -26,6 +28,16 @@ const ScalpingAI = () => {
         reason: signal.reason,
       }));
       setTrades(prevTrades => [...prevTrades, ...newTrades]);
+      
+      // Update current position
+      const lastTrade = newTrades[newTrades.length - 1];
+      if (lastTrade) {
+        if (lastTrade.action === 'BUY') {
+          setCurrentPosition({ size: 1, entryPrice: lastTrade.price });
+        } else if (lastTrade.action === 'SELL' && currentPosition) {
+          setCurrentPosition(null);
+        }
+      }
     }
   }, [marketData]);
 
@@ -44,6 +56,10 @@ const ScalpingAI = () => {
           />
           <MarketSentiment sentiment={marketData?.market_sentiment} />
           <LSTMModel marketData={marketData?.market_data || []} />
+          <RiskManagement 
+            marketData={marketData?.market_data || []}
+            currentPosition={currentPosition}
+          />
         </div>
       </div>
       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
