@@ -1,11 +1,5 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import TradingAITimeline from '../components/TradingAITimeline';
-import TradingAIOrganogram from '../components/TradingAIOrganogram';
-import ProjectDashboard from '../components/ProjectDashboard';
-import AIConstructionFlowchart from '../components/AIConstructionFlowchart';
-import AIOperationFlowchart from '../components/AIOperationFlowchart';
-import AIDecisionProcess from '../components/AIDecisionProcess';
 import ScalpingAI from '../components/ScalpingAI';
 import LSTMModel from '../components/LSTMModel';
 import RiskManagement from '../components/RiskManagement';
@@ -30,7 +24,7 @@ const Index = () => {
             <CardTitle>Modelo LSTM e Previsões</CardTitle>
           </CardHeader>
           <CardContent>
-            <LSTMModel marketData={[]} /> {/* You'll need to pass actual market data here */}
+            <LSTMModel marketData={[]} />
           </CardContent>
         </Card>
         
@@ -39,58 +33,7 @@ const Index = () => {
             <CardTitle>Gerenciamento de Risco</CardTitle>
           </CardHeader>
           <CardContent>
-            <RiskManagement marketData={[]} currentPosition={null} /> {/* Pass actual data and position */}
-          </CardContent>
-        </Card>
-        
-        <ProjectDashboard />
-      </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Fluxograma de Construção da IA</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <AIConstructionFlowchart />
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle>Fluxograma de Operação da IA</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <AIOperationFlowchart />
-          </CardContent>
-        </Card>
-      </div>
-      
-      <Card className="mt-8">
-        <CardHeader>
-          <CardTitle>Processo de Tomada de Decisão da IA</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <AIDecisionProcess />
-        </CardContent>
-      </Card>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Cronograma de Desenvolvimento</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <TradingAITimeline />
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle>Organograma da IA</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <TradingAIOrganogram />
+            <RiskManagement marketData={[]} currentPosition={null} />
           </CardContent>
         </Card>
       </div>
@@ -101,16 +44,8 @@ const Index = () => {
         </CardHeader>
         <CardContent>
           <p className="text-lg">
-            ScalpTron é uma IA totalmente autônoma projetada para ser a mais assertiva e lucrativa plataforma de Scalping Trading do mundo. Nossa IA integra análise de dados em tempo real, aprendizado de máquina avançado e estratégias de trading otimizadas para maximizar os lucros e minimizar os riscos.
+            ScalpTron é uma IA autônoma projetada para ser uma plataforma assertiva e lucrativa de Scalping Trading. Nossa IA integra análise de dados em tempo real, aprendizado de máquina avançado e estratégias de trading otimizadas.
           </p>
-          <ul className="list-disc list-inside mt-4">
-            <li>Coleta e processamento de dados em tempo real</li>
-            <li>Análise técnica e fundamental automatizada</li>
-            <li>Tomada de decisão baseada em múltiplos indicadores</li>
-            <li>Execução de trades com alta frequência e baixa latência</li>
-            <li>Gerenciamento de risco adaptativo</li>
-            <li>Aprendizado contínuo e otimização de estratégias</li>
-          </ul>
         </CardContent>
       </Card>
     </div>
