@@ -13,6 +13,7 @@ def run_backtest(historical_data, initial_capital=10000, risk_per_trade=0.01):
     entry_price = 0
     trades = []
     capital = initial_capital
+    trade_size = 0
     
     for i in range(1, len(df)):
         current_price = df['close'].iloc[i]
@@ -48,12 +49,12 @@ def calculate_performance_metrics(trades, initial_capital):
     df_trades['cumulative_return'] = (1 + df_trades['return']).cumprod() - 1
     
     total_return = df_trades['cumulative_return'].iloc[-1]
-    sharpe_ratio = df_trades['return'].mean() / df_trades['return'].std() * np.sqrt(252)
-    sortino_ratio = df_trades['return'].mean() / df_trades[df_trades['return'] < 0]['return'].std() * np.sqrt(252)
+    sharpe_ratio = df_trades['return'].mean() / df_trades['return'].std() * np.sqrt(252) if df_trades['return'].std() != 0 else 0
+    sortino_ratio = df_trades['return'].mean() / df_trades[df_trades['return'] < 0]['return'].std() * np.sqrt(252) if df_trades[df_trades['return'] < 0]['return'].std() != 0 else 0
     max_drawdown = (df_trades['cumulative_return'] + 1).cummax().sub(df_trades['cumulative_return'] + 1).max()
-    profit_factor = df_trades[df_trades['profit'] > 0]['profit'].sum() / abs(df_trades[df_trades['profit'] < 0]['profit'].sum())
+    profit_factor = df_trades[df_trades['profit'] > 0]['profit'].sum() / abs(df_trades[df_trades['profit'] < 0]['profit'].sum()) if df_trades[df_trades['profit'] < 0]['profit'].sum() != 0 else float('inf')
     expectancy = df_trades['profit'].mean()
-    avg_trade_duration = (df_trades['exit_time'] - df_trades['entry_time']).mean().total_seconds() / 60
+    avg_trade_duration = (df_trades['exit_time'] - df_trades['entry_time']).mean().total_seconds() / 60 if len(df_trades) > 0 else 0
     
     return {
         'total_return': total_return,
