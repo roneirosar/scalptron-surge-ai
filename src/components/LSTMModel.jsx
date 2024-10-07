@@ -3,7 +3,7 @@ import * as tf from '@tensorflow/tfjs';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { prepareData, createSequences, buildModel, trainModel, makePrediction } from '../utils/lstmUtils';
 
-const LSTMModel = ({ marketData }) => {
+const LSTMModel = ({ marketData, onPredictionUpdate }) => {
   const [prediction, setPrediction] = useState(null);
   const [confidence, setConfidence] = useState(null);
   const [modelStatus, setModelStatus] = useState('Inicializando');
@@ -17,7 +17,7 @@ const LSTMModel = ({ marketData }) => {
 
       setModelStatus('Preparando dados');
       const features = ['close', 'volume', 'rsi', 'macd'];
-      const normalizedData = prepareData(marketData, features);
+      const { normalizedData, dataMean, dataStd } = prepareData(marketData, features);
       
       const sequenceLength = 50;
       const [xs, ys] = createSequences(normalizedData, sequenceLength);
@@ -26,15 +26,17 @@ const LSTMModel = ({ marketData }) => {
       const model = buildModel(sequenceLength, features.length);
       
       setModelStatus('Treinando modelo');
-      await trainModel(model, xs, ys, setModelStatus);
+      const history = await trainModel(model, xs, ys, setModelStatus);
       
       setModelStatus('Fazendo previsão');
       const lastSequence = normalizedData.slice([-sequenceLength]).reshape([1, sequenceLength, features.length]);
-      const predictedValue = makePrediction(model, lastSequence, normalizedData.std(0), normalizedData.mean(0));
+      const predictedValue = makePrediction(model, lastSequence, dataStd, dataMean);
       
-      setPrediction(predictedValue.dataSync()[0]);
+      const predictionValue = predictedValue.dataSync()[0];
+      setPrediction(predictionValue);
+      onPredictionUpdate(predictionValue);
       
-      const mse = model.evaluate(xs, ys)[0].dataSync()[0];
+      const mse = history.history.mse[history.history.mse.length - 1];
       const confidenceInterval = 1.96 * Math.sqrt(mse);
       setConfidence(confidenceInterval);
 
@@ -42,7 +44,7 @@ const LSTMModel = ({ marketData }) => {
     };
     
     trainAndPredict();
-  }, [marketData]);
+  }, [marketData, onPredictionUpdate]);
 
   return (
     <Card>

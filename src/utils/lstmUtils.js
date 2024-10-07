@@ -5,7 +5,11 @@ export const prepareData = (marketData, features) => {
   const tensorData = tf.tensor2d(data);
   const dataMean = tensorData.mean(0);
   const dataStd = tensorData.std(0);
-  return tensorData.sub(dataMean).div(dataStd);
+  return {
+    normalizedData: tensorData.sub(dataMean).div(dataStd),
+    dataMean,
+    dataStd
+  };
 };
 
 export const createSequences = (normalizedData, sequenceLength) => {
@@ -42,16 +46,17 @@ export const buildModel = (sequenceLength, featuresLength) => {
 };
 
 export const trainModel = async (model, xs, ys, setModelStatus) => {
-  await model.fit(xs, ys, {
+  const history = await model.fit(xs, ys, {
     epochs: 100,
     batchSize: 32,
     validationSplit: 0.1,
     callbacks: {
       onEpochEnd: (epoch, logs) => {
-        setModelStatus(`Treinando: Época ${epoch + 1}/100`);
+        setModelStatus(`Treinando: Época ${epoch + 1}/100 - Loss: ${logs.loss.toFixed(4)}`);
       }
     }
   });
+  return history;
 };
 
 export const makePrediction = (model, lastSequence, dataStd, dataMean) => {
