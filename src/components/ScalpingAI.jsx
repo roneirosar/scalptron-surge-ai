@@ -8,6 +8,7 @@ import MarketSentiment from './MarketSentiment';
 import LSTMModel from './LSTMModel';
 import RiskManagement from './RiskManagement';
 import AutomatedTrading from './AutomatedTrading';
+import PerformanceMetrics from './PerformanceMetrics';
 import { fetchMarketData } from '../utils/apiService';
 
 const ScalpingAI = () => {
@@ -15,6 +16,7 @@ const ScalpingAI = () => {
   const [currentPosition, setCurrentPosition] = useState(null);
   const [lstmPrediction, setLstmPrediction] = useState(null);
   const [riskMetrics, setRiskMetrics] = useState(null);
+  const [performanceMetrics, setPerformanceMetrics] = useState(null);
 
   const { data: marketData, isLoading, error } = useQuery({
     queryKey: ['marketData'],
@@ -41,23 +43,38 @@ const ScalpingAI = () => {
           setCurrentPosition(null);
         }
       }
+
+      // Calculate performance metrics
+      if (trades.length > 0) {
+        const totalProfit = trades.reduce((sum, trade) => sum + trade.profit, 0);
+        const winningTrades = trades.filter(trade => trade.profit > 0);
+        const winRate = (winningTrades.length / trades.length) * 100;
+        setPerformanceMetrics({
+          totalProfit,
+          winRate,
+          totalTrades: trades.length,
+          // Add more metrics as needed
+        });
+      }
     }
-  }, [marketData, currentPosition]);
+  }, [marketData, currentPosition, trades]);
 
   if (isLoading) return <div>Carregando dados do mercado...</div>;
   if (error) return <div>Erro ao carregar dados: {error.message}</div>;
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">ScalpTron: IA de Scalping Trading</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <MarketDataChart marketData={marketData?.market_data || []} />
+      <h1 className="text-3xl font-bold mb-6">ScalpTron: IA de Scalping Trading</h1>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div>
+          <MarketDataChart marketData={marketData?.market_data || []} />
           <AIDecisionExplanation 
             prediction={marketData?.prediction}
             riskAssessment={marketData?.risk_assessment}
           />
           <MarketSentiment sentiment={marketData?.market_sentiment} />
+        </div>
+        <div>
           <LSTMModel 
             marketData={marketData?.market_data || []}
             onPredictionUpdate={setLstmPrediction}
@@ -74,9 +91,12 @@ const ScalpingAI = () => {
           />
         </div>
       </div>
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
         <TradesList trades={trades} />
-        <TradingStatistics trades={trades} />
+        <div>
+          <TradingStatistics trades={trades} />
+          <PerformanceMetrics metrics={performanceMetrics} />
+        </div>
       </div>
     </div>
   );
