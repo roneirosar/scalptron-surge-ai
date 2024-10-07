@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from data_processor import process_data
-from backend.signal_generator import generate_signals
+from signal_generator import generate_signals
 from ml_model import predict_market_movement
 from risk_manager import assess_risk
 
