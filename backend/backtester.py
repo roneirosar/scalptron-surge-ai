@@ -7,7 +7,7 @@ from risk_manager import assess_risk
 
 def run_backtest(historical_data, initial_capital=10000, risk_per_trade=0.01):
     df = process_data(historical_data)
-    df['Signal'] = generate_signals(df)
+    df = generate_signals(df)  # Modificado para atribuir o resultado
     
     position = 0
     entry_price = 0
@@ -50,7 +50,7 @@ def calculate_performance_metrics(trades, initial_capital):
     
     total_return = df_trades['cumulative_return'].iloc[-1]
     sharpe_ratio = df_trades['return'].mean() / df_trades['return'].std() * np.sqrt(252) if df_trades['return'].std() != 0 else 0
-    sortino_ratio = df_trades['return'].mean() / df_trades[df_trades['return'] < 0]['return'].std() * np.sqrt(252) if df_trades[df_trades['return'] < 0]['return'].std() != 0 else 0
+    sortino_ratio = df_trades['return'].mean() / df_trades[df_trades['return'] < 0]['return'].std() * np.sqrt(252) if len(df_trades[df_trades['return'] < 0]) > 0 and df_trades[df_trades['return'] < 0]['return'].std() != 0 else 0
     max_drawdown = (df_trades['cumulative_return'] + 1).cummax().sub(df_trades['cumulative_return'] + 1).max()
     profit_factor = df_trades[df_trades['profit'] > 0]['profit'].sum() / abs(df_trades[df_trades['profit'] < 0]['profit'].sum()) if df_trades[df_trades['profit'] < 0]['profit'].sum() != 0 else float('inf')
     expectancy = df_trades['profit'].mean()
