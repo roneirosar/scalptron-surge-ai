@@ -7,7 +7,7 @@ from risk_manager import assess_risk
 
 def run_backtest(historical_data, initial_capital=10000, risk_per_trade=0.01):
     df = process_data(historical_data)
-    df = generate_signals(df)  # Modificado para atribuir o resultado
+    df = generate_signals(df)
     
     position = 0
     entry_price = 0
@@ -70,3 +70,8 @@ def backtest_strategy(historical_data, initial_capital=10000):
     trades, final_capital = run_backtest(historical_data, initial_capital)
     performance_metrics = calculate_performance_metrics(trades, initial_capital)
     return trades, final_capital, performance_metrics
+
+if __name__ == "__main__":
+    # Aqui você pode adicionar um exemplo de uso do backtester
+    print("Executando backtester...")
+    # Exemplo: backtest_strategy(seu_dataframe_historico)
