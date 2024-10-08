@@ -6,6 +6,7 @@ import AIAnalysisSection from './AIAnalysisSection';
 import TradingSection from './TradingSection';
 import PerformanceSection from './PerformanceSection';
 import BacktestingSection from './BacktestingSection';
+import { calculateIndicators } from '../utils/technicalIndicators';
 
 const ScalpingAI = () => {
   const [trades, setTrades] = useState([]);
@@ -22,6 +23,9 @@ const ScalpingAI = () => {
   });
 
   useEffect(() => {
+    if (marketData && marketData.market_data) {
+      const dataWithIndicators = calculateIndicators(marketData.market_data);
+      
       const newTrades = marketData.signals.map(signal => ({
         time: signal.timestamp,
         action: signal.action,
@@ -52,6 +56,10 @@ const ScalpingAI = () => {
           // Add more metrics as needed
         });
       }
+
+      // Update market data with new indicators
+      marketData.market_data = dataWithIndicators;
+    }
   }, [marketData, currentPosition, trades]);
 
   if (isLoading) return <div>Carregando dados do mercado...</div>;
