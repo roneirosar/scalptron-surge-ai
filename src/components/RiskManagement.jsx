@@ -1,31 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Slider } from "@/components/ui/slider";
+import { Label } from "@/components/ui/label";
 
 const RiskManagement = ({ marketData, currentPosition }) => {
   const [riskMetrics, setRiskMetrics] = useState({
     var: 0,
+    cvar: 0,
     maxDrawdown: 0,
     sharpeRatio: 0,
     volatility: 0
   });
+  const [riskTolerance, setRiskTolerance] = useState(50);
 
   useEffect(() => {
     if (marketData && marketData.length > 0) {
       const returns = marketData.slice(1).map((d, i) => (d.close - marketData[i].close) / marketData[i].close);
       
-      // Cálculo do VaR (Value at Risk)
       const var95 = calculateVaR(returns, 0.95);
-      
-      // Cálculo do Drawdown Máximo
+      const cvar95 = calculateCVaR(returns, 0.95);
       const maxDrawdown = calculateMaxDrawdown(marketData.map(d => d.close));
-      
-      // Cálculo do Índice de Sharpe
       const sharpeRatio = calculateSharpeRatio(returns);
-      
-      // Cálculo da Volatilidade
       const volatility = calculateVolatility(returns);
 
-      setRiskMetrics({ var: var95, maxDrawdown, sharpeRatio, volatility });
+      setRiskMetrics({ var: var95, cvar: cvar95, maxDrawdown, sharpeRatio, volatility });
     }
   }, [marketData]);
 
@@ -33,6 +31,13 @@ const RiskManagement = ({ marketData, currentPosition }) => {
     const sortedReturns = returns.sort((a, b) => a - b);
     const index = Math.floor((1 - confidence) * sortedReturns.length);
     return -sortedReturns[index];
+  };
+
+  const calculateCVaR = (returns, confidence) => {
+    const sortedReturns = returns.sort((a, b) => a - b);
+    const varIndex = Math.floor((1 - confidence) * sortedReturns.length);
+    const cvarReturns = sortedReturns.slice(0, varIndex);
+    return -cvarReturns.reduce((sum, r) => sum + r, 0) / cvarReturns.length;
   };
 
   const calculateMaxDrawdown = (prices) => {
@@ -69,20 +74,46 @@ const RiskManagement = ({ marketData, currentPosition }) => {
     return 'Baixo';
   };
 
+  const getRecommendedPositionSize = () => {
+    const riskFactor = riskTolerance / 100;
+    const accountSize = 10000; // Exemplo de tamanho da conta
+    const riskPerTrade = 0.01 * riskFactor; // 1% do capital ajustado pela tolerância ao risco
+    return (accountSize * riskPerTrade) / riskMetrics.var;
+  };
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Gerenciamento de Risco Avançado</CardTitle>
       </CardHeader>
       <CardContent>
-        <p>VaR (95%): {(riskMetrics.var * 100).toFixed(2)}%</p>
-        <p>Máximo Drawdown: {(riskMetrics.maxDrawdown * 100).toFixed(2)}%</p>
-        <p>Índice de Sharpe: {riskMetrics.sharpeRatio.toFixed(2)}</p>
-        <p>Volatilidade Anualizada: {(riskMetrics.volatility * 100).toFixed(2)}%</p>
-        <p>Nível de Risco: {getRiskLevel()}</p>
-        {currentPosition && (
-          <p>Posição Atual: {currentPosition.size} @ {currentPosition.entryPrice.toFixed(2)}</p>
-        )}
+        <div className="space-y-4">
+          <p>VaR (95%): {(riskMetrics.var * 100).toFixed(2)}%</p>
+          <p>CVaR (95%): {(riskMetrics.cvar * 100).toFixed(2)}%</p>
+          <p>Máximo Drawdown: {(riskMetrics.maxDrawdown * 100).toFixed(2)}%</p>
+          <p>Índice de Sharpe: {riskMetrics.sharpeRatio.toFixed(2)}</p>
+          <p>Volatilidade Anualizada: {(riskMetrics.volatility * 100).toFixed(2)}%</p>
+          <p>Nível de Risco: {getRiskLevel()}</p>
+          
+          <div>
+            <Label htmlFor="risk-tolerance">Tolerância ao Risco</Label>
+            <Slider
+              id="risk-tolerance"
+              min={0}
+              max={100}
+              step={1}
+              value={[riskTolerance]}
+              onValueChange={(value) => setRiskTolerance(value[0])}
+            />
+            <span>{riskTolerance}%</span>
+          </div>
+          
+          <p>Tamanho Recomendado da Posição: {getRecommendedPositionSize().toFixed(2)}</p>
+          
+          {currentPosition && (
+            <p>Posição Atual: {currentPosition.size} @ {currentPosition.entryPrice.toFixed(2)}</p>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
