@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { assess_risk } from '../../backend/risk_manager';
 import { prepareData, createSequences, makePrediction } from '../utils/lstmUtils';
+import BacktestingResults from './BacktestingResults';
 
 const Backtesting = ({ marketData, lstmModel }) => {
   const [backtestResults, setBacktestResults] = useState(null);
@@ -30,7 +31,7 @@ const Backtesting = ({ marketData, lstmModel }) => {
 
       if (prediction > currentPrice * 1.01 && !position && riskAssessment.risk_level !== 'High') {
         // Comprar
-        const positionSize = Math.min(capital * riskAssessment.kelly_fraction, capital * 0.1); // Limitar a 10% do capital
+        const positionSize = Math.min(capital * riskAssessment.kelly_fraction, capital * 0.1);
         position = { type: 'long', entryPrice: currentPrice, size: positionSize / currentPrice };
         capital -= positionSize;
         totalTrades++;
@@ -85,26 +86,7 @@ const Backtesting = ({ marketData, lstmModel }) => {
         <Button onClick={runBacktest} disabled={isRunning}>
           {isRunning ? 'Executando...' : 'Executar Backtest'}
         </Button>
-        {backtestResults && (
-          <div className="mt-4">
-            <p>Capital Final: ${backtestResults.finalCapital.toFixed(2)}</p>
-            <p>Retorno Total: {backtestResults.totalReturn.toFixed(2)}%</p>
-            <p>Total de Trades: {backtestResults.totalTrades}</p>
-            <p>Win Rate: {backtestResults.winRate.toFixed(2)}%</p>
-            <p>Índice de Sharpe: {backtestResults.sharpeRatio.toFixed(2)}</p>
-            <LineChart width={500} height={300} data={backtestResults.results}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis yAxisId="left" />
-              <YAxis yAxisId="right" orientation="right" />
-              <Tooltip />
-              <Legend />
-              <Line yAxisId="left" type="monotone" dataKey="price" stroke="#8884d8" name="Preço" />
-              <Line yAxisId="left" type="monotone" dataKey="prediction" stroke="#82ca9d" name="Previsão" />
-              <Line yAxisId="right" type="monotone" dataKey="capital" stroke="#ffc658" name="Capital" />
-            </LineChart>
-          </div>
-        )}
+        {backtestResults && <BacktestingResults results={backtestResults} />}
       </CardContent>
     </Card>
   );
