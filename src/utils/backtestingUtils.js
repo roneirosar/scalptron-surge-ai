@@ -1,5 +1,17 @@
-import { assess_risk } from '../../backend/risk_manager';
 import { prepareData, createSequences, makePrediction } from './lstmUtils';
+
+const assessRisk = (historicalData, signals, prediction) => {
+  // Implementação simplificada da avaliação de risco
+  const volatility = calculateVolatility(historicalData.map(d => d.close));
+  if (volatility > 0.02) return 'High';
+  if (volatility > 0.01) return 'Medium';
+  return 'Low';
+};
+
+const calculateVolatility = (prices) => {
+  const returns = prices.slice(1).map((price, i) => (price - prices[i]) / prices[i]);
+  return Math.sqrt(returns.reduce((sum, r) => sum + r * r, 0) / returns.length) * Math.sqrt(252);
+};
 
 export const runBacktest = async (marketData, lstmModel, params) => {
   const results = [];
@@ -22,16 +34,16 @@ export const runBacktest = async (marketData, lstmModel, params) => {
     const prediction = makePrediction(lstmModel, lastSequence, dataStd, dataMean);
     
     const currentPrice = filteredData[i].close;
-    const riskAssessment = assess_risk(historicalData, [], prediction);
+    const riskLevel = assessRisk(historicalData, [], prediction);
 
-    if (prediction > currentPrice * 1.01 && !position && riskAssessment.risk_level !== 'High') {
+    if (prediction > currentPrice * 1.01 && !position && riskLevel !== 'High') {
       // Comprar
       const riskAmount = capital * (params.maxRiskPerTrade / 100);
       const positionSize = Math.min(riskAmount / (currentPrice * 0.01), capital * 0.1);
       position = { type: 'long', entryPrice: currentPrice, size: positionSize / currentPrice };
       capital -= positionSize;
       totalTrades++;
-    } else if ((prediction < currentPrice * 0.99 || riskAssessment.risk_level === 'High') && position) {
+    } else if ((prediction < currentPrice * 0.99 || riskLevel === 'High') && position) {
       // Vender
       const profit = (currentPrice - position.entryPrice) * position.size;
       capital += position.size * currentPrice;
@@ -45,7 +57,7 @@ export const runBacktest = async (marketData, lstmModel, params) => {
       price: currentPrice,
       prediction: prediction,
       capital: capital,
-      riskLevel: riskAssessment.risk_level
+      riskLevel: riskLevel
     });
   }
 
