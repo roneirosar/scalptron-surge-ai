@@ -83,3 +83,56 @@ export const evaluateModel = (model, testXs, testYs) => {
     r2: r2
   };
 };
+
+export const optimizeHyperparameters = async (xs, ys, setModelStatus) => {
+  const sequenceLength = xs.shape[1];
+  const featuresLength = xs.shape[2];
+  
+  const hyperparameters = [
+    { units: 64, dropout: 0.1 },
+    { units: 128, dropout: 0.2 },
+    { units: 256, dropout: 0.3 },
+  ];
+
+  let bestModel = null;
+  let bestPerformance = Infinity;
+
+  for (const params of hyperparameters) {
+    setModelStatus(`Otimizando: Testando unidades=${params.units}, dropout=${params.dropout}`);
+    
+    const model = tf.sequential();
+    model.add(tf.layers.lstm({
+      units: params.units,
+      returnSequences: true,
+      inputShape: [sequenceLength, featuresLength]
+    }));
+    model.add(tf.layers.dropout(params.dropout));
+    model.add(tf.layers.lstm({ units: params.units / 2, returnSequences: false }));
+    model.add(tf.layers.dropout(params.dropout));
+    model.add(tf.layers.dense({ units: 32, activation: 'relu' }));
+    model.add(tf.layers.dense({ units: 1 }));
+    
+    model.compile({
+      optimizer: tf.train.adam(0.001),
+      loss: 'meanSquaredError',
+      metrics: ['mse']
+    });
+
+    const history = await model.fit(xs, ys, {
+      epochs: 50,
+      batchSize: 32,
+      validationSplit: 0.2,
+      verbose: 0
+    });
+
+    const performance = history.history.val_loss[history.history.val_loss.length - 1];
+    
+    if (performance < bestPerformance) {
+      bestModel = model;
+      bestPerformance = performance;
+    }
+  }
+
+  setModelStatus(`Otimização concluída. Melhor performance: ${bestPerformance.toFixed(4)}`);
+  return bestModel;
+};

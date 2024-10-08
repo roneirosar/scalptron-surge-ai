@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import * as tf from '@tensorflow/tfjs';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
-import { prepareData, createSequences, buildModel, trainModel, makePrediction, evaluateModel } from '../utils/lstmUtils';
+import { prepareData, createSequences, buildModel, trainModel, makePrediction, evaluateModel, optimizeHyperparameters } from '../utils/lstmUtils';
 
 const LSTMModel = ({ marketData, onPredictionUpdate, onModelUpdate }) => {
   const [prediction, setPrediction] = useState(null);
@@ -32,26 +32,26 @@ const LSTMModel = ({ marketData, onPredictionUpdate, onModelUpdate }) => {
       const testXs = xs.slice([splitIndex, 0]);
       const testYs = ys.slice([splitIndex, 0]);
       
-      setModelStatus('Construindo modelo');
-      const model = buildModel(sequenceLength, features.length);
+      setModelStatus('Otimizando hiperparâmetros');
+      const optimizedModel = await optimizeHyperparameters(trainXs, trainYs, setModelStatus);
       
-      setModelStatus('Treinando modelo');
-      const history = await trainModel(model, trainXs, trainYs, (epoch, logs) => {
+      setModelStatus('Treinando modelo otimizado');
+      await trainModel(optimizedModel, trainXs, trainYs, (epoch, logs) => {
         setTrainingProgress({ epoch, loss: logs.loss, valLoss: logs.val_loss });
       });
       
       setModelStatus('Avaliando modelo');
-      const performance = evaluateModel(model, testXs, testYs);
+      const performance = evaluateModel(optimizedModel, testXs, testYs);
       setModelPerformance(performance);
       
       setModelStatus('Fazendo previsão');
       const lastSequence = normalizedData.slice([-sequenceLength]).reshape([1, sequenceLength, features.length]);
-      const predictedValue = makePrediction(model, lastSequence, dataStd, dataMean);
+      const predictedValue = makePrediction(optimizedModel, lastSequence, dataStd, dataMean);
       
       const predictionValue = predictedValue.dataSync()[0];
       setPrediction(predictionValue);
       onPredictionUpdate(predictionValue);
-      onModelUpdate(model);
+      onModelUpdate(optimizedModel);
       
       const mse = performance.mse;
       const confidenceInterval = 1.96 * Math.sqrt(mse);
@@ -71,7 +71,7 @@ const LSTMModel = ({ marketData, onPredictionUpdate, onModelUpdate }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Modelo LSTM Aprimorado</CardTitle>
+        <CardTitle>Modelo LSTM Otimizado</CardTitle>
       </CardHeader>
       <CardContent>
         <p>Status: {modelStatus}</p>
