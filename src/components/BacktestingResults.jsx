@@ -15,10 +15,11 @@ const BacktestingResults = ({ results }) => {
           <p>Total de Trades: {results.totalTrades}</p>
           <p>Win Rate: {results.winRate.toFixed(2)}%</p>
           <p>Índice de Sharpe: {results.sharpeRatio.toFixed(2)}</p>
+          <p>Máximo Drawdown: {(results.maxDrawdown * 100).toFixed(2)}%</p>
         </CardContent>
       </Card>
       <div className="mt-4">
-        <LineChart width={500} height={300} data={results.results}>
+        <LineChart width={600} height={300} data={results.results}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="date" />
           <YAxis yAxisId="left" />
