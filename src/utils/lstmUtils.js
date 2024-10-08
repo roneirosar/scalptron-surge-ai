@@ -27,17 +27,19 @@ export const createSequences = (normalizedData, sequenceLength) => {
 export const buildModel = (sequenceLength, featuresLength) => {
   const model = tf.sequential();
   model.add(tf.layers.lstm({
-    units: 100,
+    units: 128,
     returnSequences: true,
     inputShape: [sequenceLength, featuresLength]
   }));
   model.add(tf.layers.dropout(0.2));
-  model.add(tf.layers.lstm({ units: 50, returnSequences: false }));
+  model.add(tf.layers.lstm({ units: 64, returnSequences: false }));
   model.add(tf.layers.dropout(0.2));
+  model.add(tf.layers.dense({ units: 32, activation: 'relu' }));
   model.add(tf.layers.dense({ units: 1 }));
   
+  const optimizer = tf.train.adam(0.001);
   model.compile({
-    optimizer: tf.train.adam(0.001),
+    optimizer: optimizer,
     loss: 'meanSquaredError',
     metrics: ['mse']
   });
@@ -47,12 +49,12 @@ export const buildModel = (sequenceLength, featuresLength) => {
 
 export const trainModel = async (model, xs, ys, setModelStatus) => {
   const history = await model.fit(xs, ys, {
-    epochs: 100,
+    epochs: 150,
     batchSize: 32,
-    validationSplit: 0.1,
+    validationSplit: 0.2,
     callbacks: {
       onEpochEnd: (epoch, logs) => {
-        setModelStatus(`Treinando: Época ${epoch + 1}/100 - Loss: ${logs.loss.toFixed(4)}`);
+        setModelStatus(`Treinando: Época ${epoch + 1}/150 - Loss: ${logs.loss.toFixed(4)} - Val Loss: ${logs.val_loss.toFixed(4)}`);
       }
     }
   });
@@ -62,4 +64,12 @@ export const trainModel = async (model, xs, ys, setModelStatus) => {
 export const makePrediction = (model, lastSequence, dataStd, dataMean) => {
   const predictedNormalized = model.predict(lastSequence);
   return predictedNormalized.mul(dataStd.slice([0, 1])).add(dataMean.slice([0, 1]));
+};
+
+export const evaluateModel = (model, testXs, testYs) => {
+  const evaluation = model.evaluate(testXs, testYs);
+  return {
+    loss: evaluation[0].dataSync()[0],
+    mse: evaluation[1].dataSync()[0]
+  };
 };
