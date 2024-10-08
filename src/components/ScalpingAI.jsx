@@ -9,6 +9,7 @@ import LSTMModel from './LSTMModel';
 import RiskManagement from './RiskManagement';
 import AutomatedTrading from './AutomatedTrading';
 import PerformanceMetrics from './PerformanceMetrics';
+import Backtesting from './Backtesting';
 import { fetchMarketData } from '../utils/apiService';
 
 const ScalpingAI = () => {
@@ -97,6 +98,9 @@ const ScalpingAI = () => {
           <TradingStatistics trades={trades} />
           <PerformanceMetrics metrics={performanceMetrics} />
         </div>
+      </div>
+      <div className="mt-6">
+        <Backtesting marketData={marketData?.market_data || []} lstmModel={lstmModel} />
       </div>
     </div>
   );

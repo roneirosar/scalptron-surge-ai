@@ -67,9 +67,19 @@ export const makePrediction = (model, lastSequence, dataStd, dataMean) => {
 };
 
 export const evaluateModel = (model, testXs, testYs) => {
-  const evaluation = model.evaluate(testXs, testYs);
+  const predictions = model.predict(testXs);
+  const mse = tf.losses.meanSquaredError(testYs, predictions).dataSync()[0];
+  const mae = tf.losses.absoluteDifference(testYs, predictions).mean().dataSync()[0];
+  
+  const yMean = testYs.mean();
+  const ssTot = testYs.sub(yMean).square().sum().dataSync()[0];
+  const ssRes = testYs.sub(predictions).square().sum().dataSync()[0];
+  const r2 = 1 - (ssRes / ssTot);
+
   return {
-    loss: evaluation[0].dataSync()[0],
-    mse: evaluation[1].dataSync()[0]
+    mse: mse,
+    rmse: Math.sqrt(mse),
+    mae: mae,
+    r2: r2
   };
 };
