@@ -18,11 +18,12 @@ const ScalpingAI = () => {
   const [lstmPrediction, setLstmPrediction] = useState(null);
   const [riskMetrics, setRiskMetrics] = useState(null);
   const [performanceMetrics, setPerformanceMetrics] = useState(null);
+  const [lstmModel, setLstmModel] = useState(null);
 
   const { data: marketData, isLoading, error } = useQuery({
     queryKey: ['marketData'],
     queryFn: fetchMarketData,
-    refetchInterval: 5000, // Refetch every 5 seconds
+    refetchInterval: 5000,
   });
 
   useEffect(() => {
@@ -79,6 +80,7 @@ const ScalpingAI = () => {
           <LSTMModel 
             marketData={marketData?.market_data || []}
             onPredictionUpdate={setLstmPrediction}
+            onModelUpdate={setLstmModel}
           />
           <RiskManagement 
             marketData={marketData?.market_data || []}

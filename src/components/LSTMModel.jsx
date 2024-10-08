@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { prepareData, createSequences, buildModel, trainModel, makePrediction, evaluateModel } from '../utils/lstmUtils';
 
-const LSTMModel = ({ marketData, onPredictionUpdate }) => {
+const LSTMModel = ({ marketData, onPredictionUpdate, onModelUpdate }) => {
   const [prediction, setPrediction] = useState(null);
   const [confidence, setConfidence] = useState(null);
   const [modelStatus, setModelStatus] = useState('Inicializando');
@@ -25,7 +25,6 @@ const LSTMModel = ({ marketData, onPredictionUpdate }) => {
       const sequenceLength = 60;
       const [xs, ys] = createSequences(normalizedData, sequenceLength);
       
-      // Split data into training and testing sets
       const splitIndex = Math.floor(xs.shape[0] * 0.8);
       const trainXs = xs.slice([0, 0], [splitIndex, -1]);
       const trainYs = ys.slice([0, 0], [splitIndex, -1]);
@@ -49,22 +48,22 @@ const LSTMModel = ({ marketData, onPredictionUpdate }) => {
       const predictionValue = predictedValue.dataSync()[0];
       setPrediction(predictionValue);
       onPredictionUpdate(predictionValue);
+      onModelUpdate(model);
       
       const mse = performance.mse;
       const confidenceInterval = 1.96 * Math.sqrt(mse);
       setConfidence(confidenceInterval);
 
-      // Update prediction history
       setPredictionHistory(prevHistory => [
         ...prevHistory,
         { time: new Date().toLocaleTimeString(), predicted: predictionValue, actual: marketData[marketData.length - 1].close }
-      ].slice(-20)); // Keep only the last 20 predictions
+      ].slice(-20));
 
       setModelStatus('Previsão concluída');
     };
     
     trainAndPredict();
-  }, [marketData, onPredictionUpdate]);
+  }, [marketData, onPredictionUpdate, onModelUpdate]);
 
   return (
     <Card>
