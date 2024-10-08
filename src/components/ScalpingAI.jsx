@@ -26,12 +26,14 @@ const ScalpingAI = () => {
     if (marketData && marketData.market_data) {
       const dataWithIndicators = calculateIndicators(marketData.market_data);
       
-      const newTrades = marketData.signals.map(signal => ({
+      // Verifica se marketData.signals existe antes de usá-lo
+      const newTrades = marketData.signals ? marketData.signals.map(signal => ({
         time: signal.timestamp,
         action: signal.action,
         price: signal.price,
         reason: signal.reason,
-      }));
+      })) : [];
+
       setTrades(prevTrades => [...prevTrades, ...newTrades]);
       
       // Update current position
@@ -46,8 +48,8 @@ const ScalpingAI = () => {
 
       // Calculate performance metrics
       if (trades.length > 0) {
-        const totalProfit = trades.reduce((sum, trade) => sum + trade.profit, 0);
-        const winningTrades = trades.filter(trade => trade.profit > 0);
+        const totalProfit = trades.reduce((sum, trade) => sum + (trade.profit || 0), 0);
+        const winningTrades = trades.filter(trade => (trade.profit || 0) > 0);
         const winRate = (winningTrades.length / trades.length) * 100;
         setPerformanceMetrics({
           totalProfit,
