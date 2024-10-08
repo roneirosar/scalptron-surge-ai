@@ -1,16 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import MarketDataChart from './MarketDataChart';
-import TradesList from './TradesList';
-import TradingStatistics from './TradingStatistics';
-import AIDecisionExplanation from './AIDecisionExplanation';
-import MarketSentiment from './MarketSentiment';
-import LSTMModel from './LSTMModel';
-import RiskManagement from './RiskManagement';
-import AutomatedTrading from './AutomatedTrading';
-import PerformanceMetrics from './PerformanceMetrics';
-import Backtesting from './Backtesting';
 import { fetchMarketData } from '../utils/apiService';
+import MarketDataSection from './MarketDataSection';
+import AIAnalysisSection from './AIAnalysisSection';
+import TradingSection from './TradingSection';
+import PerformanceSection from './PerformanceSection';
+import BacktestingSection from './BacktestingSection';
 
 const ScalpingAI = () => {
   const [trades, setTrades] = useState([]);
@@ -27,7 +22,6 @@ const ScalpingAI = () => {
   });
 
   useEffect(() => {
-    if (marketData && marketData.signals) {
       const newTrades = marketData.signals.map(signal => ({
         time: signal.timestamp,
         action: signal.action,
@@ -58,7 +52,6 @@ const ScalpingAI = () => {
           // Add more metrics as needed
         });
       }
-    }
   }, [marketData, currentPosition, trades]);
 
   if (isLoading) return <div>Carregando dados do mercado...</div>;
@@ -68,42 +61,25 @@ const ScalpingAI = () => {
     <div className="p-4">
       <h1 className="text-3xl font-bold mb-6">ScalpTron: IA de Scalping Trading</h1>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div>
-          <MarketDataChart marketData={marketData?.market_data || []} />
-          <AIDecisionExplanation 
-            prediction={marketData?.prediction}
-            riskAssessment={marketData?.risk_assessment}
-          />
-          <MarketSentiment sentiment={marketData?.market_sentiment} />
-        </div>
-        <div>
-          <LSTMModel 
-            marketData={marketData?.market_data || []}
-            onPredictionUpdate={setLstmPrediction}
-            onModelUpdate={setLstmModel}
-          />
-          <RiskManagement 
-            marketData={marketData?.market_data || []}
-            currentPosition={currentPosition}
-            onRiskMetricsUpdate={setRiskMetrics}
-          />
-          <AutomatedTrading
-            marketData={marketData?.market_data || []}
-            lstmPrediction={lstmPrediction}
-            riskMetrics={riskMetrics}
-          />
-        </div>
+        <MarketDataSection marketData={marketData?.market_data || []} />
+        <AIAnalysisSection
+          prediction={marketData?.prediction}
+          riskAssessment={marketData?.risk_assessment}
+          sentiment={marketData?.market_sentiment}
+          marketData={marketData?.market_data || []}
+          onPredictionUpdate={setLstmPrediction}
+          onModelUpdate={setLstmModel}
+        />
       </div>
-      <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <TradesList trades={trades} />
-        <div>
-          <TradingStatistics trades={trades} />
-          <PerformanceMetrics metrics={performanceMetrics} />
-        </div>
-      </div>
-      <div className="mt-6">
-        <Backtesting marketData={marketData?.market_data || []} lstmModel={lstmModel} />
-      </div>
+      <TradingSection
+        marketData={marketData?.market_data || []}
+        lstmPrediction={lstmPrediction}
+        riskMetrics={riskMetrics}
+        currentPosition={currentPosition}
+        onRiskMetricsUpdate={setRiskMetrics}
+      />
+      <PerformanceSection trades={trades} performanceMetrics={performanceMetrics} />
+      <BacktestingSection marketData={marketData?.market_data || []} lstmModel={lstmModel} />
     </div>
   );
 };

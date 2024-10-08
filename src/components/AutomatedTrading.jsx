@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 const AutomatedTrading = ({ marketData, lstmPrediction, riskMetrics }) => {
   const [isAutomatedTradingEnabled, setIsAutomatedTradingEnabled] = useState(false);
@@ -11,6 +12,8 @@ const AutomatedTrading = ({ marketData, lstmPrediction, riskMetrics }) => {
   const [stopLoss, setStopLoss] = useState(2);
   const [takeProfit, setTakeProfit] = useState(3);
   const [maxPositionSize, setMaxPositionSize] = useState(1000);
+  const [tradingStrategy, setTradingStrategy] = useState('conservative');
+  const [trailingStop, setTrailingStop] = useState(1);
 
   useEffect(() => {
     if (isAutomatedTradingEnabled && marketData && lstmPrediction && riskMetrics) {
@@ -26,7 +29,7 @@ const AutomatedTrading = ({ marketData, lstmPrediction, riskMetrics }) => {
     const priceChange = (prediction - currentPrice) / currentPrice;
     const riskLevel = getRiskLevel(riskMetrics);
 
-    if (priceChange > 0.01 && riskLevel !== 'Alto') {
+    if (priceChange > 0.01 && riskLevel !== 'High') {
       return { 
         action: 'BUY', 
         price: currentPrice, 
@@ -35,7 +38,7 @@ const AutomatedTrading = ({ marketData, lstmPrediction, riskMetrics }) => {
         takeProfit: currentPrice * (1 + takeProfit / 100),
         size: Math.min(maxPositionSize, calculatePositionSize(currentPrice, riskMetrics))
       };
-    } else if (priceChange < -0.01 && riskLevel !== 'Alto') {
+    } else if (priceChange < -0.01 && riskLevel !== 'High') {
       return { 
         action: 'SELL', 
         price: currentPrice, 
@@ -86,6 +89,20 @@ const AutomatedTrading = ({ marketData, lstmPrediction, riskMetrics }) => {
         
         <div className="space-y-4">
           <div>
+            <Label htmlFor="trading-strategy">Estratégia de Trading</Label>
+            <select
+              id="trading-strategy"
+              value={tradingStrategy}
+              onChange={(e) => setTradingStrategy(e.target.value)}
+              className="w-full p-2 border rounded"
+            >
+              <option value="conservative">Conservadora</option>
+              <option value="moderate">Moderada</option>
+              <option value="aggressive">Agressiva</option>
+            </select>
+          </div>
+
+          <div>
             <Label htmlFor="stop-loss">Stop Loss (%)</Label>
             <Slider
               id="stop-loss"
@@ -112,16 +129,26 @@ const AutomatedTrading = ({ marketData, lstmPrediction, riskMetrics }) => {
           </div>
           
           <div>
-            <Label htmlFor="max-position">Tamanho Máximo da Posição</Label>
+            <Label htmlFor="trailing-stop">Trailing Stop (%)</Label>
             <Slider
-              id="max-position"
-              min={100}
-              max={10000}
-              step={100}
-              value={[maxPositionSize]}
-              onValueChange={(value) => setMaxPositionSize(value[0])}
+              id="trailing-stop"
+              min={0.1}
+              max={3}
+              step={0.1}
+              value={[trailingStop]}
+              onValueChange={(value) => setTrailingStop(value[0])}
             />
-            <span>{maxPositionSize}</span>
+            <span>{trailingStop.toFixed(1)}%</span>
+          </div>
+          
+          <div>
+            <Label htmlFor="max-position">Tamanho Máximo da Posição</Label>
+            <Input
+              id="max-position"
+              type="number"
+              value={maxPositionSize}
+              onChange={(e) => setMaxPositionSize(Number(e.target.value))}
+            />
           </div>
         </div>
 

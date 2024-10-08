@@ -10,6 +10,7 @@ const LSTMModel = ({ marketData, onPredictionUpdate, onModelUpdate }) => {
   const [modelStatus, setModelStatus] = useState('Inicializando');
   const [modelPerformance, setModelPerformance] = useState(null);
   const [predictionHistory, setPredictionHistory] = useState([]);
+  const [trainingProgress, setTrainingProgress] = useState(null);
 
   useEffect(() => {
     const trainAndPredict = async () => {
@@ -35,7 +36,9 @@ const LSTMModel = ({ marketData, onPredictionUpdate, onModelUpdate }) => {
       const model = buildModel(sequenceLength, features.length);
       
       setModelStatus('Treinando modelo');
-      const history = await trainModel(model, trainXs, trainYs, setModelStatus);
+      const history = await trainModel(model, trainXs, trainYs, (epoch, logs) => {
+        setTrainingProgress({ epoch, loss: logs.loss, valLoss: logs.val_loss });
+      });
       
       setModelStatus('Avaliando modelo');
       const performance = evaluateModel(model, testXs, testYs);
@@ -68,10 +71,18 @@ const LSTMModel = ({ marketData, onPredictionUpdate, onModelUpdate }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Previsão LSTM Otimizada</CardTitle>
+        <CardTitle>Modelo LSTM Aprimorado</CardTitle>
       </CardHeader>
       <CardContent>
         <p>Status: {modelStatus}</p>
+        {trainingProgress && (
+          <div>
+            <p>Progresso do Treinamento:</p>
+            <p>Época: {trainingProgress.epoch + 1}/150</p>
+            <p>Loss: {trainingProgress.loss.toFixed(4)}</p>
+            <p>Validation Loss: {trainingProgress.valLoss.toFixed(4)}</p>
+          </div>
+        )}
         {prediction !== null && (
           <>
             <p>Próximo preço previsto: {prediction.toFixed(2)}</p>
@@ -82,7 +93,7 @@ const LSTMModel = ({ marketData, onPredictionUpdate, onModelUpdate }) => {
           <>
             <p>Performance do modelo:</p>
             <p>MSE: {modelPerformance.mse.toFixed(4)}</p>
-            <p>RMSE: {Math.sqrt(modelPerformance.mse).toFixed(4)}</p>
+            <p>RMSE: {modelPerformance.rmse.toFixed(4)}</p>
             <p>MAE: {modelPerformance.mae.toFixed(4)}</p>
             <p>R²: {modelPerformance.r2.toFixed(4)}</p>
           </>
