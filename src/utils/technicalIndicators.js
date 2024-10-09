@@ -1,26 +1,35 @@
-import { ema, bollingerBands, rsi, macd } from 'technicalindicators';
+import { EMA, RSI, MACD, BollingerBands } from 'technicalindicators';
 
 export const calculateIndicators = (data) => {
   const closes = data.map(candle => candle.close);
   const volumes = data.map(candle => candle.volume);
 
   const sma20 = calculateSMA(closes, 20);
-  const ema20 = ema({ period: 20, values: closes });
-  const bbands = bollingerBands({ period: 20, values: closes, stdDev: 2 });
-  const rsiData = rsi({ period: 14, values: closes });
-  const macdData = macd({ fastPeriod: 12, slowPeriod: 26, signalPeriod: 9, values: closes });
+  const ema20 = EMA.calculate({period: 20, values: closes});
+  const bbands = BollingerBands.calculate({
+    period: 20,
+    values: closes,
+    stdDev: 2
+  });
+  const rsiData = RSI.calculate({period: 14, values: closes});
+  const macdData = MACD.calculate({
+    fastPeriod: 12,
+    slowPeriod: 26,
+    signalPeriod: 9,
+    values: closes
+  });
 
   return data.map((candle, index) => ({
     ...candle,
     sma20: sma20[index],
     ema20: ema20[index],
-    upperBB: bbands.upperBand[index],
-    middleBB: bbands.middleBand[index],
-    lowerBB: bbands.lowerBand[index],
+    upperBB: bbands[index]?.upper,
+    middleBB: bbands[index]?.middle,
+    lowerBB: bbands[index]?.lower,
     rsi: rsiData[index],
-    macd: macdData.MACD[index],
-    macdSignal: macdData.signal[index],
-    macdHistogram: macdData.histogram[index],
+    macd: macdData[index]?.MACD,
+    macdSignal: macdData[index]?.signal,
+    macdHistogram: macdData[index]?.histogram,
   }));
 };
 
