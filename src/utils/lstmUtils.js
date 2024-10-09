@@ -89,16 +89,16 @@ export const optimizeHyperparameters = async (xs, ys, setModelStatus) => {
   const featuresLength = xs.shape[2];
   
   const hyperparameters = [
-    { units: 64, dropout: 0.1 },
-    { units: 128, dropout: 0.2 },
-    { units: 256, dropout: 0.3 },
+    { units: 64, dropout: 0.1, learningRate: 0.001 },
+    { units: 128, dropout: 0.2, learningRate: 0.0005 },
+    { units: 256, dropout: 0.3, learningRate: 0.0001 },
   ];
 
   let bestModel = null;
   let bestPerformance = Infinity;
 
   for (const params of hyperparameters) {
-    setModelStatus(`Otimizando: Testando unidades=${params.units}, dropout=${params.dropout}`);
+    setModelStatus(`Otimizando: Testando unidades=${params.units}, dropout=${params.dropout}, taxa de aprendizado=${params.learningRate}`);
     
     const model = tf.sequential();
     model.add(tf.layers.lstm({
@@ -112,8 +112,9 @@ export const optimizeHyperparameters = async (xs, ys, setModelStatus) => {
     model.add(tf.layers.dense({ units: 32, activation: 'relu' }));
     model.add(tf.layers.dense({ units: 1 }));
     
+    const optimizer = tf.train.adam(params.learningRate);
     model.compile({
-      optimizer: tf.train.adam(0.001),
+      optimizer: optimizer,
       loss: 'meanSquaredError',
       metrics: ['mse']
     });

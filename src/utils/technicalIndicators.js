@@ -1,4 +1,4 @@
-import { EMA, RSI, MACD, BollingerBands, ATR, StochasticRSI, ADX } from 'technicalindicators';
+import { EMA, RSI, MACD, BollingerBands, ATR, StochasticRSI, ADX, PSAR } from 'technicalindicators';
 
 export const calculateIndicators = (data) => {
   const closes = data.map(candle => candle.close);
@@ -39,6 +39,12 @@ export const calculateIndicators = (data) => {
     close: closes,
     period: 14
   });
+  const psarData = PSAR.calculate({
+    step: 0.02,
+    max: 0.2,
+    high: highs,
+    low: lows
+  });
 
   return data.map((candle, index) => ({
     ...candle,
@@ -56,7 +62,8 @@ export const calculateIndicators = (data) => {
     stochRSI_D: stochRSIData[index]?.d,
     adx: adxData[index]?.adx,
     plusDI: adxData[index]?.pdi,
-    minusDI: adxData[index]?.mdi
+    minusDI: adxData[index]?.mdi,
+    psar: psarData[index]
   }));
 };
 

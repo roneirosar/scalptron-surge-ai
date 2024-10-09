@@ -22,29 +22,54 @@ const AdvancedTradingStrategy = ({ marketData, lstmPrediction, riskMetrics }) =>
   }, [isStrategyEnabled, marketData, lstmPrediction, riskMetrics]);
 
   const makeTradeDecision = (marketData, prediction, riskMetrics) => {
-    const currentPrice = marketData[marketData.length - 1].close;
-    const priceChange = (prediction - currentPrice) / currentPrice;
+    const currentData = marketData[marketData.length - 1];
+    const prevData = marketData[marketData.length - 2];
     const riskLevel = getRiskLevel(riskMetrics);
 
-    if (priceChange > 0.01 && riskLevel !== 'High') {
-      return { 
-        action: 'BUY', 
-        price: currentPrice, 
-        reason: 'Previsão de alta com risco aceitável',
-        stopLoss: currentPrice * (1 - stopLoss / 100),
-        takeProfit: currentPrice * (1 + takeProfit / 100)
-      };
-    } else if (priceChange < -0.01 && riskLevel !== 'High') {
-      return { 
-        action: 'SELL', 
-        price: currentPrice, 
-        reason: 'Previsão de queda com risco aceitável',
-        stopLoss: currentPrice * (1 + stopLoss / 100),
-        takeProfit: currentPrice * (1 - takeProfit / 100)
-      };
+    let action = 'HOLD';
+    let reason = 'Condições não favoráveis para negociação';
+
+    // Estratégia combinada usando múltiplos indicadores
+    if (
+      currentData.rsi < 30 &&
+      currentData.macdHistogram > prevData.macdHistogram &&
+      currentData.close > currentData.ema20 &&
+      currentData.adx > 25 &&
+      currentData.plusDI > currentData.minusDI &&
+      riskLevel !== 'High'
+    ) {
+      action = 'BUY';
+      reason = 'Condições favoráveis para compra: RSI sobrevendido, MACD em alta, preço acima da EMA20, ADX forte com +DI > -DI';
+    } else if (
+      currentData.rsi > 70 &&
+      currentData.macdHistogram < prevData.macdHistogram &&
+      currentData.close < currentData.ema20 &&
+      currentData.adx > 25 &&
+      currentData.plusDI < currentData.minusDI &&
+      riskLevel !== 'High'
+    ) {
+      action = 'SELL';
+      reason = 'Condições favoráveis para venda: RSI sobrecomprado, MACD em queda, preço abaixo da EMA20, ADX forte com +DI < -DI';
     }
 
-    return { action: 'HOLD', reason: 'Condições não favoráveis para negociação' };
+    // Incorporar previsão LSTM
+    const priceChange = (prediction - currentData.close) / currentData.close;
+    if (priceChange > 0.01 && action === 'BUY') {
+      reason += ' - Confirmado pela previsão LSTM de alta';
+    } else if (priceChange < -0.01 && action === 'SELL') {
+      reason += ' - Confirmado pela previsão LSTM de queda';
+    } else if (Math.abs(priceChange) > 0.01) {
+      action = 'HOLD';
+      reason = 'Conflito entre análise técnica e previsão LSTM';
+    }
+
+    return {
+      action,
+      price: currentData.close,
+      reason,
+      stopLoss: action === 'BUY' ? currentData.close * (1 - stopLoss / 100) : currentData.close * (1 + stopLoss / 100),
+      takeProfit: action === 'BUY' ? currentData.close * (1 + takeProfit / 100) : currentData.close * (1 - takeProfit / 100)
+    };
   };
 
   const getRiskLevel = (riskMetrics) => {

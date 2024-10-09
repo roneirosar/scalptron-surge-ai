@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
-import { prepareData, createSequences, buildModel, trainModel, makePrediction, evaluateModel } from '../utils/lstmUtils';
+import { prepareData, createSequences, buildModel, trainModel, makePrediction, evaluateModel, optimizeHyperparameters } from '../utils/lstmUtils';
 
 const LSTMModel = ({ marketData, onPredictionUpdate, onModelUpdate }) => {
   const [prediction, setPrediction] = useState(null);
@@ -18,7 +18,7 @@ const LSTMModel = ({ marketData, onPredictionUpdate, onModelUpdate }) => {
       }
 
       setModelStatus('Preparando dados');
-      const features = ['close', 'volume', 'rsi', 'macd', 'ema20', 'upperBB', 'lowerBB'];
+      const features = ['close', 'volume', 'rsi', 'macd', 'ema20', 'upperBB', 'lowerBB', 'atr', 'adx'];
       const { normalizedData, dataMean, dataStd } = prepareData(marketData, features);
       
       const sequenceLength = 60;
@@ -30,21 +30,23 @@ const LSTMModel = ({ marketData, onPredictionUpdate, onModelUpdate }) => {
       const testXs = xs.slice([splitIndex, 0]);
       const testYs = ys.slice([splitIndex, 0]);
       
-      setModelStatus('Construindo e treinando modelo');
-      const model = buildModel(sequenceLength, features.length);
-      await trainModel(model, trainXs, trainYs, setModelStatus);
+      setModelStatus('Otimizando hiperparâmetros');
+      const optimizedModel = await optimizeHyperparameters(trainXs, trainYs, setModelStatus);
+      
+      setModelStatus('Treinando modelo otimizado');
+      await trainModel(optimizedModel, trainXs, trainYs, setModelStatus);
       
       setModelStatus('Avaliando modelo');
-      const performance = evaluateModel(model, testXs, testYs);
+      const performance = evaluateModel(optimizedModel, testXs, testYs);
       setModelPerformance(performance);
       
       setModelStatus('Fazendo previsão');
       const lastSequence = normalizedData.slice([-sequenceLength]).reshape([1, sequenceLength, features.length]);
-      const predictedValue = makePrediction(model, lastSequence, dataStd, dataMean);
+      const predictedValue = makePrediction(optimizedModel, lastSequence, dataStd, dataMean);
       
       setPrediction(predictedValue);
       onPredictionUpdate(predictedValue);
-      onModelUpdate(model);
+      onModelUpdate(optimizedModel);
       
       const confidenceInterval = 1.96 * Math.sqrt(performance.mse);
       setConfidence(confidenceInterval);
