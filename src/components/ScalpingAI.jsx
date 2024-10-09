@@ -7,6 +7,7 @@ import TradingSection from './TradingSection';
 import PerformanceSection from './PerformanceSection';
 import BacktestingSection from './BacktestingSection';
 import DetailedDataVisualization from './DetailedDataVisualization';
+import AutomatedTrading from './AutomatedTrading';
 import { calculateIndicators } from '../utils/technicalIndicators';
 
 const ScalpingAI = () => {
@@ -27,7 +28,6 @@ const ScalpingAI = () => {
     if (marketData && marketData.market_data) {
       const dataWithIndicators = calculateIndicators(marketData.market_data);
       
-      // Verifica se marketData.signals existe antes de usá-lo
       const newTrades = marketData.signals ? marketData.signals.map(signal => ({
         time: signal.timestamp,
         action: signal.action,
@@ -56,7 +56,8 @@ const ScalpingAI = () => {
           totalProfit,
           winRate,
           totalTrades: trades.length,
-          // Add more metrics as needed
+          sharpeRatio: calculateSharpeRatio(trades),
+          maxDrawdown: calculateMaxDrawdown(trades),
         });
       }
 
@@ -64,6 +65,33 @@ const ScalpingAI = () => {
       marketData.market_data = dataWithIndicators;
     }
   }, [marketData, currentPosition, trades]);
+
+  const calculateSharpeRatio = (trades) => {
+    // Implementação do cálculo do Sharpe Ratio
+    const returns = trades.map(trade => trade.profit || 0);
+    const avgReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
+    const stdDev = Math.sqrt(returns.reduce((sum, r) => sum + Math.pow(r - avgReturn, 2), 0) / returns.length);
+    return (avgReturn / stdDev) * Math.sqrt(252); // Anualizado
+  };
+
+  const calculateMaxDrawdown = (trades) => {
+    let maxDrawdown = 0;
+    let peak = 0;
+    let capital = 0;
+
+    trades.forEach(trade => {
+      capital += trade.profit || 0;
+      if (capital > peak) {
+        peak = capital;
+      }
+      const drawdown = (peak - capital) / peak;
+      if (drawdown > maxDrawdown) {
+        maxDrawdown = drawdown;
+      }
+    });
+
+    return maxDrawdown;
+  };
 
   if (isLoading) return <div>Carregando dados do mercado...</div>;
   if (error) return <div>Erro ao carregar dados: {error.message}</div>;
@@ -88,6 +116,11 @@ const ScalpingAI = () => {
         riskMetrics={riskMetrics}
         currentPosition={currentPosition}
         onRiskMetricsUpdate={setRiskMetrics}
+      />
+      <AutomatedTrading
+        marketData={marketData?.market_data || []}
+        lstmPrediction={lstmPrediction}
+        riskMetrics={riskMetrics}
       />
       <PerformanceSection trades={trades} performanceMetrics={performanceMetrics} />
       <BacktestingSection marketData={marketData?.market_data || []} lstmModel={lstmModel} />

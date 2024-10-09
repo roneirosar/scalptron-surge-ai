@@ -5,10 +5,11 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 
 const AutomatedTrading = ({ marketData, lstmPrediction, riskMetrics }) => {
   const [isAutomatedTradingEnabled, setIsAutomatedTradingEnabled] = useState(false);
-  const [lastTrade, setLastTrade] = useState(null);
+  const [trades, setTrades] = useState([]);
   const [stopLoss, setStopLoss] = useState(2);
   const [takeProfit, setTakeProfit] = useState(3);
   const [maxPositionSize, setMaxPositionSize] = useState(1000);
@@ -66,10 +67,18 @@ const AutomatedTrading = ({ marketData, lstmPrediction, riskMetrics }) => {
 
   const executeTrade = (decision) => {
     console.log(`Executando ${decision.action} a ${decision.price}`);
-    console.log(`Stop Loss: ${decision.stopLoss}, Take Profit: ${decision.takeProfit}`);
-    console.log(`Tamanho da posição: ${decision.size}`);
-    setLastTrade(decision);
+    setTrades(prevTrades => [...prevTrades, {
+      time: new Date().toLocaleTimeString(),
+      action: decision.action,
+      price: decision.price,
+      reason: decision.reason
+    }]);
   };
+
+  const equityCurve = trades.map((trade, index) => ({
+    tradeNumber: index + 1,
+    equity: trades.slice(0, index + 1).reduce((sum, t) => sum + (t.profit || 0), 0)
+  }));
 
   return (
     <Card>
@@ -87,7 +96,7 @@ const AutomatedTrading = ({ marketData, lstmPrediction, riskMetrics }) => {
           </Label>
         </div>
         
-        <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
             <Label htmlFor="trading-strategy">Estratégia de Trading</Label>
             <select
@@ -101,7 +110,6 @@ const AutomatedTrading = ({ marketData, lstmPrediction, riskMetrics }) => {
               <option value="aggressive">Agressiva</option>
             </select>
           </div>
-
           <div>
             <Label htmlFor="stop-loss">Stop Loss (%)</Label>
             <Slider
@@ -114,7 +122,6 @@ const AutomatedTrading = ({ marketData, lstmPrediction, riskMetrics }) => {
             />
             <span>{stopLoss.toFixed(1)}%</span>
           </div>
-          
           <div>
             <Label htmlFor="take-profit">Take Profit (%)</Label>
             <Slider
@@ -127,7 +134,6 @@ const AutomatedTrading = ({ marketData, lstmPrediction, riskMetrics }) => {
             />
             <span>{takeProfit.toFixed(1)}%</span>
           </div>
-          
           <div>
             <Label htmlFor="trailing-stop">Trailing Stop (%)</Label>
             <Slider
@@ -140,7 +146,6 @@ const AutomatedTrading = ({ marketData, lstmPrediction, riskMetrics }) => {
             />
             <span>{trailingStop.toFixed(1)}%</span>
           </div>
-          
           <div>
             <Label htmlFor="max-position">Tamanho Máximo da Posição</Label>
             <Input
@@ -152,17 +157,29 @@ const AutomatedTrading = ({ marketData, lstmPrediction, riskMetrics }) => {
           </div>
         </div>
 
-        {lastTrade && (
-          <div className="mt-4">
-            <p>Última Negociação:</p>
-            <p>Ação: {lastTrade.action}</p>
-            <p>Preço: {lastTrade.price.toFixed(2)}</p>
-            <p>Motivo: {lastTrade.reason}</p>
-            <p>Stop Loss: {lastTrade.stopLoss?.toFixed(2)}</p>
-            <p>Take Profit: {lastTrade.takeProfit?.toFixed(2)}</p>
-            <p>Tamanho da Posição: {lastTrade.size?.toFixed(2)}</p>
+        <div className="mt-4">
+          <h3 className="text-lg font-semibold mb-2">Histórico de Trades</h3>
+          <div className="max-h-60 overflow-y-auto">
+            {trades.map((trade, index) => (
+              <div key={index} className="mb-2">
+                <p>{trade.time} - {trade.action} @ {trade.price.toFixed(2)}</p>
+                <p className="text-sm text-gray-600">{trade.reason}</p>
+              </div>
+            ))}
           </div>
-        )}
+        </div>
+
+        <div className="mt-4">
+          <h3 className="text-lg font-semibold mb-2">Curva de Equity</h3>
+          <LineChart width={500} height={300} data={equityCurve}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="tradeNumber" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Line type="monotone" dataKey="equity" stroke="#8884d8" name="Equity" />
+          </LineChart>
+        </div>
       </CardContent>
     </Card>
   );
