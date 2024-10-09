@@ -8,6 +8,7 @@ import PerformanceSection from './PerformanceSection';
 import BacktestingSection from './BacktestingSection';
 import DetailedDataVisualization from './DetailedDataVisualization';
 import AutomatedTrading from './AutomatedTrading';
+import IntegrationTest from './IntegrationTest';
 import { calculateIndicators } from '../utils/technicalIndicators';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -128,6 +129,10 @@ const ScalpingAI = () => {
           </div>
         </CardContent>
       </Card>
+      
+      <div className="mt-6">
+        <IntegrationTest marketData={marketData?.market_data || []} lstmModel={lstmModel} />
+      </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <MarketDataSection marketData={marketData?.market_data || []} />
