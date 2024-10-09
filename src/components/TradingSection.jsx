@@ -1,6 +1,6 @@
 import React from 'react';
 import RiskManagement from './RiskManagement';
-import AutomatedTrading from './AutomatedTrading';
+import AdvancedTradingStrategy from './AdvancedTradingStrategy';
 
 const TradingSection = ({ marketData, lstmPrediction, riskMetrics, currentPosition, onRiskMetricsUpdate }) => (
   <div className="mt-6">
@@ -11,7 +11,7 @@ const TradingSection = ({ marketData, lstmPrediction, riskMetrics, currentPositi
         currentPosition={currentPosition}
         onRiskMetricsUpdate={onRiskMetricsUpdate}
       />
-      <AutomatedTrading
+      <AdvancedTradingStrategy
         marketData={marketData}
         lstmPrediction={lstmPrediction}
         riskMetrics={riskMetrics}

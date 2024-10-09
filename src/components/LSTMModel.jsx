@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import * as tf from '@tensorflow/tfjs';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
-import { prepareData, createSequences, buildModel, trainModel, makePrediction, evaluateModel, optimizeHyperparameters } from '../utils/lstmUtils';
+import { prepareData, createSequences, buildModel, trainModel, makePrediction, evaluateModel } from '../utils/lstmUtils';
 
 const LSTMModel = ({ marketData, onPredictionUpdate, onModelUpdate }) => {
   const [prediction, setPrediction] = useState(null);
@@ -10,7 +9,6 @@ const LSTMModel = ({ marketData, onPredictionUpdate, onModelUpdate }) => {
   const [modelStatus, setModelStatus] = useState('Inicializando');
   const [modelPerformance, setModelPerformance] = useState(null);
   const [predictionHistory, setPredictionHistory] = useState([]);
-  const [trainingProgress, setTrainingProgress] = useState(null);
 
   useEffect(() => {
     const trainAndPredict = async () => {
@@ -20,7 +18,7 @@ const LSTMModel = ({ marketData, onPredictionUpdate, onModelUpdate }) => {
       }
 
       setModelStatus('Preparando dados');
-      const features = ['close', 'volume', 'sma20', 'ema20', 'upperBB', 'lowerBB', 'rsi', 'macd', 'macdSignal', 'macdHistogram'];
+      const features = ['close', 'volume', 'rsi', 'macd', 'ema20', 'upperBB', 'lowerBB'];
       const { normalizedData, dataMean, dataStd } = prepareData(marketData, features);
       
       const sequenceLength = 60;
@@ -32,34 +30,28 @@ const LSTMModel = ({ marketData, onPredictionUpdate, onModelUpdate }) => {
       const testXs = xs.slice([splitIndex, 0]);
       const testYs = ys.slice([splitIndex, 0]);
       
-      setModelStatus('Otimizando hiperparâmetros');
-      const optimizedModel = await optimizeHyperparameters(trainXs, trainYs, setModelStatus);
-      
-      setModelStatus('Treinando modelo otimizado');
-      await trainModel(optimizedModel, trainXs, trainYs, (epoch, logs) => {
-        setTrainingProgress({ epoch, loss: logs.loss, valLoss: logs.val_loss });
-      });
+      setModelStatus('Construindo e treinando modelo');
+      const model = buildModel(sequenceLength, features.length);
+      await trainModel(model, trainXs, trainYs, setModelStatus);
       
       setModelStatus('Avaliando modelo');
-      const performance = evaluateModel(optimizedModel, testXs, testYs);
+      const performance = evaluateModel(model, testXs, testYs);
       setModelPerformance(performance);
       
       setModelStatus('Fazendo previsão');
       const lastSequence = normalizedData.slice([-sequenceLength]).reshape([1, sequenceLength, features.length]);
-      const predictedValue = makePrediction(optimizedModel, lastSequence, dataStd, dataMean);
+      const predictedValue = makePrediction(model, lastSequence, dataStd, dataMean);
       
-      const predictionValue = predictedValue.dataSync()[0];
-      setPrediction(predictionValue);
-      onPredictionUpdate(predictionValue);
-      onModelUpdate(optimizedModel);
+      setPrediction(predictedValue);
+      onPredictionUpdate(predictedValue);
+      onModelUpdate(model);
       
-      const mse = performance.mse;
-      const confidenceInterval = 1.96 * Math.sqrt(mse);
+      const confidenceInterval = 1.96 * Math.sqrt(performance.mse);
       setConfidence(confidenceInterval);
 
       setPredictionHistory(prevHistory => [
         ...prevHistory,
-        { time: new Date().toLocaleTimeString(), predicted: predictionValue, actual: marketData[marketData.length - 1].close }
+        { time: new Date().toLocaleTimeString(), predicted: predictedValue, actual: marketData[marketData.length - 1].close }
       ].slice(-20));
 
       setModelStatus('Previsão concluída');
@@ -71,18 +63,10 @@ const LSTMModel = ({ marketData, onPredictionUpdate, onModelUpdate }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Modelo LSTM Otimizado</CardTitle>
+        <CardTitle>Modelo LSTM Aprimorado</CardTitle>
       </CardHeader>
       <CardContent>
         <p>Status: {modelStatus}</p>
-        {trainingProgress && (
-          <div>
-            <p>Progresso do Treinamento:</p>
-            <p>Época: {trainingProgress.epoch + 1}/150</p>
-            <p>Loss: {trainingProgress.loss.toFixed(4)}</p>
-            <p>Validation Loss: {trainingProgress.valLoss.toFixed(4)}</p>
-          </div>
-        )}
         {prediction !== null && (
           <>
             <p>Próximo preço previsto: {prediction.toFixed(2)}</p>
