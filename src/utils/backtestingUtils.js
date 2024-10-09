@@ -3,8 +3,11 @@ import { calculateIndicators } from './technicalIndicators';
 
 const assessRisk = (historicalData, signals, prediction) => {
   const volatility = calculateVolatility(historicalData.map(d => d.close));
-  if (volatility > 0.02) return 'High';
-  if (volatility > 0.01) return 'Medium';
+  const rsi = historicalData[historicalData.length - 1].rsi;
+  const adx = historicalData[historicalData.length - 1].adx;
+
+  if (volatility > 0.02 || rsi > 70 || rsi < 30 || adx < 20) return 'High';
+  if (volatility > 0.01 || (rsi > 60 || rsi < 40) || adx < 25) return 'Medium';
   return 'Low';
 };
 
@@ -41,11 +44,18 @@ export const runBacktest = async (marketData, lstmModel, params) => {
     const currentPrice = dataWithIndicators[i].close;
     const riskLevel = assessRisk(historicalData, [], prediction);
 
-    if (!position && prediction > currentPrice * (1 + params.entryThreshold) && riskLevel !== 'High') {
+    if (!position && prediction > currentPrice * (1 + params.entryThreshold / 100) && riskLevel !== 'High') {
       // Comprar
       const riskAmount = capital * (params.maxRiskPerTrade / 100);
       const positionSize = Math.min(riskAmount / (currentPrice * params.stopLoss / 100), capital / currentPrice);
-      position = { type: 'long', entryPrice: currentPrice, size: positionSize, stopLoss: currentPrice * (1 - params.stopLoss / 100), takeProfit: currentPrice * (1 + params.takeProfit / 100) };
+      position = { 
+        type: 'long', 
+        entryPrice: currentPrice, 
+        size: positionSize, 
+        stopLoss: currentPrice * (1 - params.stopLoss / 100), 
+        takeProfit: currentPrice * (1 + params.takeProfit / 100),
+        trailingStop: currentPrice * (1 - params.trailingStop / 100)
+      };
       capital -= positionSize * currentPrice;
       totalTrades++;
     } else if (position) {
@@ -64,9 +74,23 @@ export const runBacktest = async (marketData, lstmModel, params) => {
         position = null;
       } else if (params.trailingStop > 0) {
         // Atualizar trailing stop
-        const newStopLoss = currentPrice * (1 - params.trailingStop / 100);
-        if (newStopLoss > position.stopLoss) {
-          position.stopLoss = newStopLoss;
+        const newTrailingStop = currentPrice * (1 - params.trailingStop / 100);
+        if (newTrailingStop > position.trailingStop) {
+          position.trailingStop = newTrailingStop;
+          position.stopLoss = Math.max(position.stopLoss, newTrailingStop);
+        }
+        if (currentPrice <= position.trailingStop) {
+          // Fechar posição pelo trailing stop
+          const profit = (currentPrice - position.entryPrice) * position.size;
+          capital += position.size * currentPrice;
+          if (profit > 0) {
+            winningTrades++;
+            totalProfit += profit;
+          } else {
+            losingTrades++;
+            totalLoss += Math.abs(profit);
+          }
+          position = null;
         }
       }
     }

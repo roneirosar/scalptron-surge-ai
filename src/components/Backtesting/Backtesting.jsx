@@ -18,11 +18,12 @@ const Backtesting = ({ marketData, lstmModel }) => {
     stopLoss: 2,
     takeProfit: 3,
     trailingStop: 1,
+    entryThreshold: 0.5,
   });
 
   const handleParamChange = (e) => {
     const { name, value } = e.target;
-    setParams(prev => ({ ...prev, [name]: name === 'initialCapital' || name === 'maxRiskPerTrade' || name === 'stopLoss' || name === 'takeProfit' || name === 'trailingStop' ? Number(value) : value }));
+    setParams(prev => ({ ...prev, [name]: ['initialCapital', 'maxRiskPerTrade', 'stopLoss', 'takeProfit', 'trailingStop', 'entryThreshold'].includes(name) ? Number(value) : value }));
   };
 
   const handleRunBacktest = async () => {
