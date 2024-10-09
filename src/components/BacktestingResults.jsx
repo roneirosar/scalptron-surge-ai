@@ -18,12 +18,7 @@ const BacktestingResults = ({ results }) => {
             <p>Win Rate: {results.winRate.toFixed(2)}%</p>
             <p>Profit Factor: {results.profitFactor.toFixed(2)}</p>
             <p>Índice de Sharpe: {results.sharpeRatio.toFixed(2)}</p>
-            <p>Índice de Sortino: {results.sortinoRatio.toFixed(2)}</p>
             <p>Máximo Drawdown: {(results.maxDrawdown * 100).toFixed(2)}%</p>
-            <p>Média de Ganho: ${results.averageWin.toFixed(2)}</p>
-            <p>Média de Perda: ${results.averageLoss.toFixed(2)}</p>
-            <p>Razão Ganho/Perda: {results.winLossRatio.toFixed(2)}</p>
-            <p>Expectativa Matemática: ${results.expectancy.toFixed(2)}</p>
           </div>
         </CardContent>
       </Card>
