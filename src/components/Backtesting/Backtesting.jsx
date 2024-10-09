@@ -15,17 +15,20 @@ const Backtesting = ({ marketData, lstmModel }) => {
     endDate: '',
     initialCapital: 10000,
     maxRiskPerTrade: 1,
+    stopLoss: 2,
+    takeProfit: 3,
+    trailingStop: 1,
   });
 
   const handleParamChange = (e) => {
     const { name, value } = e.target;
-    setParams(prev => ({ ...prev, [name]: name === 'initialCapital' || name === 'maxRiskPerTrade' ? Number(value) : value }));
+    setParams(prev => ({ ...prev, [name]: name === 'initialCapital' || name === 'maxRiskPerTrade' || name === 'stopLoss' || name === 'takeProfit' || name === 'trailingStop' ? Number(value) : value }));
   };
 
   const handleRunBacktest = async () => {
     setIsRunning(true);
     const results = await runBacktest(marketData, lstmModel, params);
-    const monteCarloResults = runMonteCarlo(results, 1000);
+    const monteCarloResults = runMonteCarlo(results.trades, 1000);
     setBacktestResults({ ...results, monteCarloResults });
     setIsRunning(false);
   };
@@ -33,7 +36,7 @@ const Backtesting = ({ marketData, lstmModel }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Backtesting Aprimorado</CardTitle>
+        <CardTitle>Backtesting Avançado</CardTitle>
       </CardHeader>
       <CardContent>
         <BacktestingForm params={params} handleParamChange={handleParamChange} />
@@ -44,7 +47,9 @@ const Backtesting = ({ marketData, lstmModel }) => {
           <>
             <BacktestingResults results={backtestResults} />
             <BacktestingCharts 
-              results={backtestResults.results} 
+              results={backtestResults.trades} 
+              equity={backtestResults.equityCurve}
+              drawdown={backtestResults.drawdownCurve}
               monteCarloResults={backtestResults.monteCarloResults} 
             />
           </>

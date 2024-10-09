@@ -1,7 +1,9 @@
-import { EMA, RSI, MACD, BollingerBands } from 'technicalindicators';
+import { EMA, RSI, MACD, BollingerBands, ATR, StochasticRSI, ADX } from 'technicalindicators';
 
 export const calculateIndicators = (data) => {
   const closes = data.map(candle => candle.close);
+  const highs = data.map(candle => candle.high);
+  const lows = data.map(candle => candle.low);
   const volumes = data.map(candle => candle.volume);
 
   const sma20 = calculateSMA(closes, 20);
@@ -18,6 +20,25 @@ export const calculateIndicators = (data) => {
     signalPeriod: 9,
     values: closes
   });
+  const atrData = ATR.calculate({
+    high: highs,
+    low: lows,
+    close: closes,
+    period: 14
+  });
+  const stochRSIData = StochasticRSI.calculate({
+    values: closes,
+    rsiPeriod: 14,
+    stochasticPeriod: 14,
+    kPeriod: 3,
+    dPeriod: 3
+  });
+  const adxData = ADX.calculate({
+    high: highs,
+    low: lows,
+    close: closes,
+    period: 14
+  });
 
   return data.map((candle, index) => ({
     ...candle,
@@ -30,6 +51,12 @@ export const calculateIndicators = (data) => {
     macd: macdData[index]?.MACD,
     macdSignal: macdData[index]?.signal,
     macdHistogram: macdData[index]?.histogram,
+    atr: atrData[index],
+    stochRSI_K: stochRSIData[index]?.k,
+    stochRSI_D: stochRSIData[index]?.d,
+    adx: adxData[index]?.adx,
+    plusDI: adxData[index]?.pdi,
+    minusDI: adxData[index]?.mdi
   }));
 };
 

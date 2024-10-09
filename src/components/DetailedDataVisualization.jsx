@@ -41,6 +41,8 @@ const DetailedDataVisualization = ({ marketData }) => {
           <Tooltip />
           <Legend />
           <Line type="monotone" dataKey="rsi" stroke="#8884d8" name="RSI" />
+          <Line type="monotone" dataKey="stochRSI_K" stroke="#82ca9d" name="Stochastic RSI K" />
+          <Line type="monotone" dataKey="stochRSI_D" stroke="#ffc658" name="Stochastic RSI D" />
         </LineChart>
         
         <LineChart width={600} height={300} data={marketData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
@@ -52,6 +54,26 @@ const DetailedDataVisualization = ({ marketData }) => {
           <Line type="monotone" dataKey="macd" stroke="#8884d8" name="MACD" />
           <Line type="monotone" dataKey="macdSignal" stroke="#82ca9d" name="Sinal MACD" />
           <Bar dataKey="macdHistogram" fill="#ffc658" name="Histograma MACD" />
+        </LineChart>
+
+        <LineChart width={600} height={300} data={marketData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="date" />
+          <YAxis />
+          <Tooltip />
+          <Legend />
+          <Line type="monotone" dataKey="atr" stroke="#8884d8" name="ATR" />
+        </LineChart>
+
+        <LineChart width={600} height={300} data={marketData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="date" />
+          <YAxis />
+          <Tooltip />
+          <Legend />
+          <Line type="monotone" dataKey="adx" stroke="#8884d8" name="ADX" />
+          <Line type="monotone" dataKey="plusDI" stroke="#82ca9d" name="+DI" />
+          <Line type="monotone" dataKey="minusDI" stroke="#ffc658" name="-DI" />
         </LineChart>
       </CardContent>
     </Card>
