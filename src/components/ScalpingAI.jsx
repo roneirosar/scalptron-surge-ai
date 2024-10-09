@@ -9,6 +9,9 @@ import BacktestingSection from './BacktestingSection';
 import DetailedDataVisualization from './DetailedDataVisualization';
 import AutomatedTrading from './AutomatedTrading';
 import { calculateIndicators } from '../utils/technicalIndicators';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { AlertCircle } from 'lucide-react';
 
 const ScalpingAI = () => {
   const [trades, setTrades] = useState([]);
@@ -17,6 +20,7 @@ const ScalpingAI = () => {
   const [riskMetrics, setRiskMetrics] = useState(null);
   const [performanceMetrics, setPerformanceMetrics] = useState(null);
   const [lstmModel, setLstmModel] = useState(null);
+  const [isAutomatedTradingEnabled, setIsAutomatedTradingEnabled] = useState(false);
 
   const { data: marketData, isLoading, error } = useQuery({
     queryKey: ['marketData'],
@@ -67,7 +71,6 @@ const ScalpingAI = () => {
   }, [marketData, currentPosition, trades]);
 
   const calculateSharpeRatio = (trades) => {
-    // Implementação do cálculo do Sharpe Ratio
     const returns = trades.map(trade => trade.profit || 0);
     const avgReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
     const stdDev = Math.sqrt(returns.reduce((sum, r) => sum + Math.pow(r - avgReturn, 2), 0) / returns.length);
@@ -93,12 +96,39 @@ const ScalpingAI = () => {
     return maxDrawdown;
   };
 
+  const toggleAutomatedTrading = () => {
+    setIsAutomatedTradingEnabled(!isAutomatedTradingEnabled);
+  };
+
   if (isLoading) return <div>Carregando dados do mercado...</div>;
   if (error) return <div>Erro ao carregar dados: {error.message}</div>;
 
   return (
     <div className="p-4">
       <h1 className="text-3xl font-bold mb-6">ScalpTron: IA de Scalping Trading</h1>
+      
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Painel de Controle</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <Button 
+              onClick={toggleAutomatedTrading}
+              variant={isAutomatedTradingEnabled ? "destructive" : "default"}
+            >
+              {isAutomatedTradingEnabled ? "Desativar Trading Automatizado" : "Ativar Trading Automatizado"}
+            </Button>
+            {isAutomatedTradingEnabled && (
+              <div className="flex items-center text-green-500">
+                <AlertCircle className="mr-2" />
+                <span>Trading Automatizado Ativo</span>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+      
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <MarketDataSection marketData={marketData?.market_data || []} />
         <AIAnalysisSection
@@ -121,6 +151,7 @@ const ScalpingAI = () => {
         marketData={marketData?.market_data || []}
         lstmPrediction={lstmPrediction}
         riskMetrics={riskMetrics}
+        isEnabled={isAutomatedTradingEnabled}
       />
       <PerformanceSection trades={trades} performanceMetrics={performanceMetrics} />
       <BacktestingSection marketData={marketData?.market_data || []} lstmModel={lstmModel} />
