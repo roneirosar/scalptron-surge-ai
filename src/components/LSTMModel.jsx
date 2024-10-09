@@ -20,7 +20,7 @@ const LSTMModel = ({ marketData, onPredictionUpdate, onModelUpdate }) => {
       }
 
       setModelStatus('Preparando dados');
-      const features = ['close', 'volume', 'rsi', 'macd'];
+      const features = ['close', 'volume', 'sma20', 'ema20', 'upperBB', 'lowerBB', 'rsi', 'macd', 'macdSignal', 'macdHistogram'];
       const { normalizedData, dataMean, dataStd } = prepareData(marketData, features);
       
       const sequenceLength = 60;

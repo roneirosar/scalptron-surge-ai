@@ -1,38 +1,38 @@
+import { ema, bollingerBands, rsi, macd } from 'technicalindicators';
+
 export const calculateIndicators = (data) => {
-  // Implementação básica de indicadores técnicos
-  return data.map(candle => ({
+  const closes = data.map(candle => candle.close);
+  const volumes = data.map(candle => candle.volume);
+
+  const sma20 = calculateSMA(closes, 20);
+  const ema20 = ema({ period: 20, values: closes });
+  const bbands = bollingerBands({ period: 20, values: closes, stdDev: 2 });
+  const rsiData = rsi({ period: 14, values: closes });
+  const macdData = macd({ fastPeriod: 12, slowPeriod: 26, signalPeriod: 9, values: closes });
+
+  return data.map((candle, index) => ({
     ...candle,
-    sma20: calculateSMA(data, candle.date, 20),
-    rsi: calculateRSI(data, candle.date),
-    // Adicione mais indicadores conforme necessário
+    sma20: sma20[index],
+    ema20: ema20[index],
+    upperBB: bbands.upperBand[index],
+    middleBB: bbands.middleBand[index],
+    lowerBB: bbands.lowerBand[index],
+    rsi: rsiData[index],
+    macd: macdData.MACD[index],
+    macdSignal: macdData.signal[index],
+    macdHistogram: macdData.histogram[index],
   }));
 };
 
-const calculateSMA = (data, currentDate, period) => {
-  const index = data.findIndex(candle => candle.date === currentDate);
-  if (index < period - 1) return null;
-  const slice = data.slice(index - period + 1, index + 1);
-  return slice.reduce((sum, candle) => sum + candle.close, 0) / period;
-};
-
-const calculateRSI = (data, currentDate, period = 14) => {
-  const index = data.findIndex(candle => candle.date === currentDate);
-  if (index < period) return null;
-  
-  let gains = 0;
-  let losses = 0;
-  
-  for (let i = index - period + 1; i <= index; i++) {
-    const change = data[i].close - data[i-1].close;
-    if (change >= 0) {
-      gains += change;
+const calculateSMA = (data, period) => {
+  const sma = [];
+  for (let i = 0; i < data.length; i++) {
+    if (i < period - 1) {
+      sma.push(null);
     } else {
-      losses -= change;
+      const sum = data.slice(i - period + 1, i + 1).reduce((a, b) => a + b, 0);
+      sma.push(sum / period);
     }
   }
-  
-  const avgGain = gains / period;
-  const avgLoss = losses / period;
-  const rs = avgGain / avgLoss;
-  return 100 - (100 / (1 + rs));
+  return sma;
 };

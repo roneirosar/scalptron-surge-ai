@@ -3,13 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 
-const RiskManagement = ({ marketData, currentPosition }) => {
+const RiskManagement = ({ marketData, currentPosition, onRiskMetricsUpdate }) => {
   const [riskMetrics, setRiskMetrics] = useState({
     var: 0,
     cvar: 0,
     maxDrawdown: 0,
     sharpeRatio: 0,
-    volatility: 0
+    volatility: 0,
+    kellyFraction: 0,
   });
   const [riskTolerance, setRiskTolerance] = useState(50);
 
@@ -22,10 +23,13 @@ const RiskManagement = ({ marketData, currentPosition }) => {
       const maxDrawdown = calculateMaxDrawdown(marketData.map(d => d.close));
       const sharpeRatio = calculateSharpeRatio(returns);
       const volatility = calculateVolatility(returns);
+      const kellyFraction = calculateKellyFraction(returns);
 
-      setRiskMetrics({ var: var95, cvar: cvar95, maxDrawdown, sharpeRatio, volatility });
+      const newRiskMetrics = { var: var95, cvar: cvar95, maxDrawdown, sharpeRatio, volatility, kellyFraction };
+      setRiskMetrics(newRiskMetrics);
+      onRiskMetricsUpdate(newRiskMetrics);
     }
-  }, [marketData]);
+  }, [marketData, onRiskMetricsUpdate]);
 
   const calculateVaR = (returns, confidence) => {
     const sortedReturns = returns.sort((a, b) => a - b);
@@ -67,6 +71,13 @@ const RiskManagement = ({ marketData, currentPosition }) => {
     return Math.sqrt(returns.reduce((sum, r) => sum + Math.pow(r, 2), 0) / returns.length) * Math.sqrt(252); // Anualizado
   };
 
+  const calculateKellyFraction = (returns) => {
+    const winRate = returns.filter(r => r > 0).length / returns.length;
+    const avgWin = returns.filter(r => r > 0).reduce((sum, r) => sum + r, 0) / returns.filter(r => r > 0).length;
+    const avgLoss = Math.abs(returns.filter(r => r < 0).reduce((sum, r) => sum + r, 0) / returns.filter(r => r < 0).length);
+    return winRate - ((1 - winRate) / (avgWin / avgLoss));
+  };
+
   const getRiskLevel = () => {
     const { var: varValue, volatility } = riskMetrics;
     if (varValue > 0.03 || volatility > 0.4) return 'Alto';
@@ -78,7 +89,7 @@ const RiskManagement = ({ marketData, currentPosition }) => {
     const riskFactor = riskTolerance / 100;
     const accountSize = 10000; // Exemplo de tamanho da conta
     const riskPerTrade = 0.01 * riskFactor; // 1% do capital ajustado pela tolerância ao risco
-    return (accountSize * riskPerTrade) / riskMetrics.var;
+    return Math.min((accountSize * riskPerTrade) / riskMetrics.var, accountSize * riskMetrics.kellyFraction);
   };
 
   return (
@@ -93,6 +104,7 @@ const RiskManagement = ({ marketData, currentPosition }) => {
           <p>Máximo Drawdown: {(riskMetrics.maxDrawdown * 100).toFixed(2)}%</p>
           <p>Índice de Sharpe: {riskMetrics.sharpeRatio.toFixed(2)}</p>
           <p>Volatilidade Anualizada: {(riskMetrics.volatility * 100).toFixed(2)}%</p>
+          <p>Fração de Kelly: {(riskMetrics.kellyFraction * 100).toFixed(2)}%</p>
           <p>Nível de Risco: {getRiskLevel()}</p>
           
           <div>

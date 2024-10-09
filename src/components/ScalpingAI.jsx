@@ -6,6 +6,7 @@ import AIAnalysisSection from './AIAnalysisSection';
 import TradingSection from './TradingSection';
 import PerformanceSection from './PerformanceSection';
 import BacktestingSection from './BacktestingSection';
+import DetailedDataVisualization from './DetailedDataVisualization';
 import { calculateIndicators } from '../utils/technicalIndicators';
 
 const ScalpingAI = () => {
@@ -90,6 +91,7 @@ const ScalpingAI = () => {
       />
       <PerformanceSection trades={trades} performanceMetrics={performanceMetrics} />
       <BacktestingSection marketData={marketData?.market_data || []} lstmModel={lstmModel} />
+      <DetailedDataVisualization marketData={marketData?.market_data || []} />
     </div>
   );
 };
