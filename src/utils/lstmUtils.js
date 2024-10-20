@@ -24,20 +24,20 @@ export const createSequences = (normalizedData, sequenceLength) => {
   });
 };
 
-export const buildModel = (sequenceLength, featuresLength) => {
+export const buildModel = (sequenceLength, featuresLength, hyperparams) => {
   const model = tf.sequential();
   model.add(tf.layers.lstm({
-    units: 128,
+    units: hyperparams.units,
     returnSequences: true,
     inputShape: [sequenceLength, featuresLength]
   }));
-  model.add(tf.layers.dropout(0.2));
-  model.add(tf.layers.lstm({ units: 64, returnSequences: false }));
-  model.add(tf.layers.dropout(0.2));
+  model.add(tf.layers.dropout(hyperparams.dropout));
+  model.add(tf.layers.lstm({ units: hyperparams.units / 2, returnSequences: false }));
+  model.add(tf.layers.dropout(hyperparams.dropout));
   model.add(tf.layers.dense({ units: 32, activation: 'relu' }));
   model.add(tf.layers.dense({ units: 1 }));
   
-  const optimizer = tf.train.adam(0.001);
+  const optimizer = tf.train.adam(hyperparams.learningRate);
   model.compile({
     optimizer: optimizer,
     loss: 'meanSquaredError',
@@ -47,14 +47,14 @@ export const buildModel = (sequenceLength, featuresLength) => {
   return model;
 };
 
-export const trainModel = async (model, xs, ys, setModelStatus) => {
+export const trainModel = async (model, xs, ys, hyperparams, setModelStatus) => {
   const history = await model.fit(xs, ys, {
-    epochs: 150,
-    batchSize: 32,
+    epochs: hyperparams.epochs,
+    batchSize: hyperparams.batchSize,
     validationSplit: 0.2,
     callbacks: {
       onEpochEnd: (epoch, logs) => {
-        setModelStatus(`Treinando: Época ${epoch + 1}/150 - Loss: ${logs.loss.toFixed(4)} - Val Loss: ${logs.val_loss.toFixed(4)}`);
+        setModelStatus(`Treinando: Época ${epoch + 1}/${hyperparams.epochs} - Loss: ${logs.loss.toFixed(4)} - Val Loss: ${logs.val_loss.toFixed(4)}`);
       }
     }
   });
@@ -89,9 +89,9 @@ export const optimizeHyperparameters = async (xs, ys, setModelStatus) => {
   const featuresLength = xs.shape[2];
   
   const hyperparameters = [
-    { units: 64, dropout: 0.1, learningRate: 0.001 },
-    { units: 128, dropout: 0.2, learningRate: 0.0005 },
-    { units: 256, dropout: 0.3, learningRate: 0.0001 },
+    { units: 64, dropout: 0.1, learningRate: 0.001, epochs: 100, batchSize: 32 },
+    { units: 128, dropout: 0.2, learningRate: 0.0005, epochs: 150, batchSize: 64 },
+    { units: 256, dropout: 0.3, learningRate: 0.0001, epochs: 200, batchSize: 128 },
   ];
 
   let bestModel = null;
@@ -100,31 +100,8 @@ export const optimizeHyperparameters = async (xs, ys, setModelStatus) => {
   for (const params of hyperparameters) {
     setModelStatus(`Otimizando: Testando unidades=${params.units}, dropout=${params.dropout}, taxa de aprendizado=${params.learningRate}`);
     
-    const model = tf.sequential();
-    model.add(tf.layers.lstm({
-      units: params.units,
-      returnSequences: true,
-      inputShape: [sequenceLength, featuresLength]
-    }));
-    model.add(tf.layers.dropout(params.dropout));
-    model.add(tf.layers.lstm({ units: params.units / 2, returnSequences: false }));
-    model.add(tf.layers.dropout(params.dropout));
-    model.add(tf.layers.dense({ units: 32, activation: 'relu' }));
-    model.add(tf.layers.dense({ units: 1 }));
-    
-    const optimizer = tf.train.adam(params.learningRate);
-    model.compile({
-      optimizer: optimizer,
-      loss: 'meanSquaredError',
-      metrics: ['mse']
-    });
-
-    const history = await model.fit(xs, ys, {
-      epochs: 50,
-      batchSize: 32,
-      validationSplit: 0.2,
-      verbose: 0
-    });
+    const model = buildModel(sequenceLength, featuresLength, params);
+    const history = await trainModel(model, xs, ys, params, setModelStatus);
 
     const performance = history.history.val_loss[history.history.val_loss.length - 1];
     

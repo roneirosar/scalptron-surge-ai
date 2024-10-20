@@ -1,19 +1,19 @@
 import { prepareData, createSequences, makePrediction } from './lstmUtils';
 import { calculateIndicators } from './technicalIndicators';
+import { calculateVolatility, calculateVaR, calculateSharpeRatio } from './riskCalculations';
 
 const assessRisk = (historicalData, signals, prediction) => {
-  const volatility = calculateVolatility(historicalData.map(d => d.close));
+  const returns = historicalData.slice(1).map((d, i) => (d.close - historicalData[i].close) / historicalData[i].close);
+  const volatility = calculateVolatility(returns);
+  const var95 = calculateVaR(returns, 0.95);
+  const sharpeRatio = calculateSharpeRatio(returns);
+  
   const rsi = historicalData[historicalData.length - 1].rsi;
   const adx = historicalData[historicalData.length - 1].adx;
 
-  if (volatility > 0.02 || rsi > 70 || rsi < 30 || adx < 20) return 'High';
-  if (volatility > 0.01 || (rsi > 60 || rsi < 40) || adx < 25) return 'Medium';
+  if (volatility > 0.02 || var95 > 0.03 || rsi > 70 || rsi < 30 || adx < 20) return 'High';
+  if (volatility > 0.01 || var95 > 0.02 || (rsi > 60 || rsi < 40) || adx < 25) return 'Medium';
   return 'Low';
-};
-
-const calculateVolatility = (prices) => {
-  const returns = prices.slice(1).map((price, i) => (price - prices[i]) / prices[i]);
-  return Math.sqrt(returns.reduce((sum, r) => sum + r * r, 0) / returns.length) * Math.sqrt(252);
 };
 
 export const runBacktest = async (marketData, lstmModel, params) => {
@@ -125,15 +125,6 @@ export const runBacktest = async (marketData, lstmModel, params) => {
     equityCurve: results.map(r => ({ date: r.date, equity: r.capital })),
     drawdownCurve: calculateDrawdownCurve(results.map(r => r.capital))
   };
-};
-
-const calculateSharpeRatio = (capitalHistory) => {
-  const returns = capitalHistory.map((capital, i) => 
-    i === 0 ? 0 : (capital - capitalHistory[i-1]) / capitalHistory[i-1]
-  );
-  const avgReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
-  const stdDev = Math.sqrt(returns.reduce((sum, r) => sum + Math.pow(r - avgReturn, 2), 0) / returns.length);
-  return (avgReturn / stdDev) * Math.sqrt(252); // Anualizado
 };
 
 const calculateMaxDrawdown = (capitalHistory) => {
