@@ -14,6 +14,7 @@ import { continuousLearning } from '../utils/lstmUtils';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
 
 const ScalpingAI = () => {
   const [trades, setTrades] = useState([]);
@@ -79,10 +80,18 @@ const ScalpingAI = () => {
 
       // Continuous learning
       if (lstmModel && (!lastUpdateTime || Date.now() - lastUpdateTime > 3600000)) { // Update every hour
-        continuousLearning(lstmModel, dataWithIndicators, (status) => console.log(status))
+        continuousLearning(lstmModel, dataWithIndicators, (status) => {
+          console.log(status);
+          toast.info(status);
+        })
           .then(updatedModel => {
             setLstmModel(updatedModel);
             setLastUpdateTime(Date.now());
+            toast.success('Modelo LSTM atualizado com sucesso!');
+          })
+          .catch(error => {
+            console.error('Erro no aprendizado contínuo:', error);
+            toast.error('Erro ao atualizar o modelo LSTM');
           });
       }
     }
@@ -178,6 +187,7 @@ const ScalpingAI = () => {
       <PerformanceSection trades={trades} performanceMetrics={performanceMetrics} />
       <BacktestingSection marketData={marketData?.market_data || []} lstmModel={lstmModel} />
       <DetailedDataVisualization marketData={marketData?.market_data || []} />
+      <IntegrationTest marketData={marketData?.market_data || []} lstmModel={lstmModel} />
     </div>
   );
 };
