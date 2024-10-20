@@ -10,6 +10,7 @@ import DetailedDataVisualization from './DetailedDataVisualization';
 import AutomatedTrading from './AutomatedTrading';
 import IntegrationTest from './IntegrationTest';
 import { calculateIndicators } from '../utils/technicalIndicators';
+import { continuousLearning } from '../utils/lstmUtils';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertCircle } from 'lucide-react';
@@ -28,6 +29,7 @@ const ScalpingAI = () => {
   });
   const [lstmModel, setLstmModel] = useState(null);
   const [isAutomatedTradingEnabled, setIsAutomatedTradingEnabled] = useState(false);
+  const [lastUpdateTime, setLastUpdateTime] = useState(null);
 
   const { data: marketData, isLoading, error } = useQuery({
     queryKey: ['marketData'],
@@ -74,8 +76,17 @@ const ScalpingAI = () => {
 
       // Update market data with new indicators
       marketData.market_data = dataWithIndicators;
+
+      // Continuous learning
+      if (lstmModel && (!lastUpdateTime || Date.now() - lastUpdateTime > 3600000)) { // Update every hour
+        continuousLearning(lstmModel, dataWithIndicators, (status) => console.log(status))
+          .then(updatedModel => {
+            setLstmModel(updatedModel);
+            setLastUpdateTime(Date.now());
+          });
+      }
     }
-  }, [marketData, currentPosition, trades]);
+  }, [marketData, currentPosition, trades, lstmModel, lastUpdateTime]);
 
   const calculateSharpeRatio = (trades) => {
     const returns = trades.map(trade => trade.profit || 0);

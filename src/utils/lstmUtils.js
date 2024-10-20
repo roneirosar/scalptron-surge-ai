@@ -114,3 +114,15 @@ export const optimizeHyperparameters = async (xs, ys, setModelStatus) => {
   setModelStatus(`Otimização concluída. Melhor performance: ${bestPerformance.toFixed(4)}`);
   return bestModel;
 };
+
+// Novo método para aprendizado contínuo
+export const continuousLearning = async (model, newData, setModelStatus) => {
+  const { normalizedData, dataMean, dataStd } = prepareData(newData, ['close', 'volume', 'rsi', 'macd', 'atr', 'adx']);
+  const [xs, ys] = createSequences(normalizedData, 60);
+  
+  setModelStatus('Iniciando aprendizado contínuo...');
+  await trainModel(model, xs, ys, { epochs: 10, batchSize: 32 }, setModelStatus);
+  setModelStatus('Aprendizado contínuo concluído');
+  
+  return model;
+};

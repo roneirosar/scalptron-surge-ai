@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { assessRisk, calculatePositionSize, adjustStopLoss, shouldClosePosition } from '../utils/riskManagement';
 
 const AutomatedTrading = ({ marketData, lstmPrediction, riskMetrics }) => {
   const [isAutomatedTradingEnabled, setIsAutomatedTradingEnabled] = useState(false);
@@ -28,41 +29,31 @@ const AutomatedTrading = ({ marketData, lstmPrediction, riskMetrics }) => {
   const makeTradeDecision = (marketData, prediction, riskMetrics) => {
     const currentPrice = marketData[marketData.length - 1].close;
     const priceChange = (prediction - currentPrice) / currentPrice;
-    const riskLevel = getRiskLevel(riskMetrics);
+    const riskAssessment = assessRisk(marketData, null, { volatilityIndex: riskMetrics.volatility * 100, trendStrength: 50 });
 
-    if (priceChange > 0.01 && riskLevel !== 'High') {
+    if (priceChange > 0.01 && riskAssessment.riskLevel !== 'Alto' && riskAssessment.riskLevel !== 'Muito Alto') {
+      const positionSize = calculatePositionSize(maxPositionSize, 0.01, stopLoss / 100);
       return { 
         action: 'BUY', 
         price: currentPrice, 
         reason: 'Previsão de alta com risco aceitável',
         stopLoss: currentPrice * (1 - stopLoss / 100),
         takeProfit: currentPrice * (1 + takeProfit / 100),
-        size: Math.min(maxPositionSize, calculatePositionSize(currentPrice, riskMetrics))
+        size: positionSize
       };
-    } else if (priceChange < -0.01 && riskLevel !== 'High') {
+    } else if (priceChange < -0.01 && riskAssessment.riskLevel !== 'Alto' && riskAssessment.riskLevel !== 'Muito Alto') {
+      const positionSize = calculatePositionSize(maxPositionSize, 0.01, stopLoss / 100);
       return { 
         action: 'SELL', 
         price: currentPrice, 
         reason: 'Previsão de queda com risco aceitável',
         stopLoss: currentPrice * (1 + stopLoss / 100),
         takeProfit: currentPrice * (1 - takeProfit / 100),
-        size: Math.min(maxPositionSize, calculatePositionSize(currentPrice, riskMetrics))
+        size: positionSize
       };
     }
 
     return { action: 'HOLD', reason: 'Condições não favoráveis para negociação' };
-  };
-
-  const getRiskLevel = (riskMetrics) => {
-    if (riskMetrics.var > 0.03 || riskMetrics.volatility > 0.4) return 'Alto';
-    if (riskMetrics.var > 0.02 || riskMetrics.volatility > 0.3) return 'Médio';
-    return 'Baixo';
-  };
-
-  const calculatePositionSize = (currentPrice, riskMetrics) => {
-    const riskPerTrade = 0.01; // 1% do capital
-    const accountSize = 10000; // Exemplo de tamanho da conta
-    return (accountSize * riskPerTrade) / (currentPrice * riskMetrics.volatility);
   };
 
   const executeTrade = (decision) => {
@@ -71,7 +62,10 @@ const AutomatedTrading = ({ marketData, lstmPrediction, riskMetrics }) => {
       time: new Date().toLocaleTimeString(),
       action: decision.action,
       price: decision.price,
-      reason: decision.reason
+      reason: decision.reason,
+      size: decision.size,
+      stopLoss: decision.stopLoss,
+      takeProfit: decision.takeProfit
     }]);
   };
 
