@@ -1,21 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchMarketData } from '../utils/apiService';
+import { calculateIndicators } from '../utils/technicalIndicators';
+import { continuousLearning } from '../utils/lstmUtils';
+import { toast } from 'sonner';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+import DashboardPanel from './DashboardPanel';
 import MarketDataSection from './MarketDataSection';
 import AIAnalysisSection from './AIAnalysisSection';
 import TradingSection from './TradingSection';
+import AutomatedTrading from './AutomatedTrading';
 import PerformanceSection from './PerformanceSection';
 import BacktestingSection from './BacktestingSection';
 import DetailedDataVisualization from './DetailedDataVisualization';
-import AutomatedTrading from './AutomatedTrading';
 import IntegrationTest from './IntegrationTest';
-import { calculateIndicators } from '../utils/technicalIndicators';
-import { continuousLearning } from '../utils/lstmUtils';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { AlertCircle, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
-import { toast } from 'sonner';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const ScalpingAI = () => {
   const [trades, setTrades] = useState([]);
@@ -98,32 +97,6 @@ const ScalpingAI = () => {
     }
   }, [marketData, currentPosition, trades, lstmModel, lastUpdateTime]);
 
-  const calculateSharpeRatio = (trades) => {
-    const returns = trades.map(trade => trade.profit || 0);
-    const avgReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
-    const stdDev = Math.sqrt(returns.reduce((sum, r) => sum + Math.pow(r - avgReturn, 2), 0) / returns.length);
-    return (avgReturn / stdDev) * Math.sqrt(252); // Anualizado
-  };
-
-  const calculateMaxDrawdown = (trades) => {
-    let maxDrawdown = 0;
-    let peak = 0;
-    let capital = 0;
-
-    trades.forEach(trade => {
-      capital += trade.profit || 0;
-      if (capital > peak) {
-        peak = capital;
-      }
-      const drawdown = (peak - capital) / peak;
-      if (drawdown > maxDrawdown) {
-        maxDrawdown = drawdown;
-      }
-    });
-
-    return maxDrawdown;
-  };
-
   const toggleAutomatedTrading = () => {
     setIsAutomatedTradingEnabled(!isAutomatedTradingEnabled);
   };
@@ -135,50 +108,11 @@ const ScalpingAI = () => {
     <div className="p-4 max-w-7xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">ScalpTron: IA de Scalping Trading</h1>
       
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            Painel de Controle
-            <Button 
-              onClick={toggleAutomatedTrading}
-              variant={isAutomatedTradingEnabled ? "destructive" : "default"}
-            >
-              {isAutomatedTradingEnabled ? "Desativar Trading Automatizado" : "Ativar Trading Automatizado"}
-            </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isAutomatedTradingEnabled && (
-            <div className="flex items-center text-green-500">
-              <AlertCircle className="mr-2" />
-              <span>Trading Automatizado Ativo</span>
-            </div>
-          )}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-            <Card>
-              <CardContent className="flex items-center justify-between p-4">
-                <span>Lucro/Perda Total</span>
-                <span className={`text-xl font-bold ${performanceMetrics.totalProfit >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                  {performanceMetrics.totalProfit >= 0 ? <TrendingUp className="inline mr-2" /> : <TrendingDown className="inline mr-2" />}
-                  ${Math.abs(performanceMetrics.totalProfit).toFixed(2)}
-                </span>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="flex items-center justify-between p-4">
-                <span>Win Rate</span>
-                <span className="text-xl font-bold">{performanceMetrics.winRate.toFixed(2)}%</span>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="flex items-center justify-between p-4">
-                <span>Total de Trades</span>
-                <span className="text-xl font-bold">{performanceMetrics.totalTrades}</span>
-              </CardContent>
-            </Card>
-          </div>
-        </CardContent>
-      </Card>
+      <DashboardPanel 
+        isAutomatedTradingEnabled={isAutomatedTradingEnabled}
+        toggleAutomatedTrading={toggleAutomatedTrading}
+        performanceMetrics={performanceMetrics}
+      />
       
       <Tabs defaultValue="market-data" className="mb-6">
         <TabsList className="grid w-full grid-cols-4">
