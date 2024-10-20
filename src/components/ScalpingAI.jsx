@@ -19,7 +19,13 @@ const ScalpingAI = () => {
   const [currentPosition, setCurrentPosition] = useState(null);
   const [lstmPrediction, setLstmPrediction] = useState(null);
   const [riskMetrics, setRiskMetrics] = useState(null);
-  const [performanceMetrics, setPerformanceMetrics] = useState(null);
+  const [performanceMetrics, setPerformanceMetrics] = useState({
+    totalProfit: 0,
+    winRate: 0,
+    totalTrades: 0,
+    sharpeRatio: 0,
+    maxDrawdown: 0,
+  });
   const [lstmModel, setLstmModel] = useState(null);
   const [isAutomatedTradingEnabled, setIsAutomatedTradingEnabled] = useState(false);
 

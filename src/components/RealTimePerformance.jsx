@@ -8,6 +8,20 @@ const RealTimePerformance = ({ performanceMetrics, trades }) => {
     equity: trades.slice(0, index + 1).reduce((sum, t) => sum + (t.profit || 0), 0)
   }));
 
+  // Verifica se performanceMetrics é null ou undefined
+  if (!performanceMetrics) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Desempenho em Tempo Real</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p>Dados de desempenho não disponíveis no momento.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
