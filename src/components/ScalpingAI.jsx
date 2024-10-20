@@ -13,8 +13,9 @@ import { calculateIndicators } from '../utils/technicalIndicators';
 import { continuousLearning } from '../utils/lstmUtils';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
 import { toast } from 'sonner';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const ScalpingAI = () => {
   const [trades, setTrades] = useState([]);
@@ -131,62 +132,96 @@ const ScalpingAI = () => {
   if (error) return <div>Erro ao carregar dados: {error.message}</div>;
 
   return (
-    <div className="p-4">
+    <div className="p-4 max-w-7xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">ScalpTron: IA de Scalping Trading</h1>
       
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Painel de Controle</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center justify-between">
+            Painel de Controle
             <Button 
               onClick={toggleAutomatedTrading}
               variant={isAutomatedTradingEnabled ? "destructive" : "default"}
             >
               {isAutomatedTradingEnabled ? "Desativar Trading Automatizado" : "Ativar Trading Automatizado"}
             </Button>
-            {isAutomatedTradingEnabled && (
-              <div className="flex items-center text-green-500">
-                <AlertCircle className="mr-2" />
-                <span>Trading Automatizado Ativo</span>
-              </div>
-            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isAutomatedTradingEnabled && (
+            <div className="flex items-center text-green-500">
+              <AlertCircle className="mr-2" />
+              <span>Trading Automatizado Ativo</span>
+            </div>
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+            <Card>
+              <CardContent className="flex items-center justify-between p-4">
+                <span>Lucro/Perda Total</span>
+                <span className={`text-xl font-bold ${performanceMetrics.totalProfit >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                  {performanceMetrics.totalProfit >= 0 ? <TrendingUp className="inline mr-2" /> : <TrendingDown className="inline mr-2" />}
+                  ${Math.abs(performanceMetrics.totalProfit).toFixed(2)}
+                </span>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="flex items-center justify-between p-4">
+                <span>Win Rate</span>
+                <span className="text-xl font-bold">{performanceMetrics.winRate.toFixed(2)}%</span>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="flex items-center justify-between p-4">
+                <span>Total de Trades</span>
+                <span className="text-xl font-bold">{performanceMetrics.totalTrades}</span>
+              </CardContent>
+            </Card>
           </div>
         </CardContent>
       </Card>
       
-      <div className="mt-6">
-        <IntegrationTest marketData={marketData?.market_data || []} lstmModel={lstmModel} />
-      </div>
+      <Tabs defaultValue="market-data" className="mb-6">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="market-data">Dados do Mercado</TabsTrigger>
+          <TabsTrigger value="ai-analysis">Análise da IA</TabsTrigger>
+          <TabsTrigger value="trading">Trading</TabsTrigger>
+          <TabsTrigger value="performance">Desempenho</TabsTrigger>
+        </TabsList>
+        <TabsContent value="market-data">
+          <MarketDataSection marketData={marketData?.market_data || []} />
+          <DetailedDataVisualization marketData={marketData?.market_data || []} />
+        </TabsContent>
+        <TabsContent value="ai-analysis">
+          <AIAnalysisSection
+            prediction={marketData?.prediction}
+            riskAssessment={marketData?.risk_assessment}
+            sentiment={marketData?.market_sentiment}
+            marketData={marketData?.market_data || []}
+            onPredictionUpdate={setLstmPrediction}
+            onModelUpdate={setLstmModel}
+          />
+        </TabsContent>
+        <TabsContent value="trading">
+          <TradingSection
+            marketData={marketData?.market_data || []}
+            lstmPrediction={lstmPrediction}
+            riskMetrics={riskMetrics}
+            currentPosition={currentPosition}
+            onRiskMetricsUpdate={setRiskMetrics}
+          />
+          <AutomatedTrading
+            marketData={marketData?.market_data || []}
+            lstmPrediction={lstmPrediction}
+            riskMetrics={riskMetrics}
+            isEnabled={isAutomatedTradingEnabled}
+          />
+        </TabsContent>
+        <TabsContent value="performance">
+          <PerformanceSection trades={trades} performanceMetrics={performanceMetrics} />
+          <BacktestingSection marketData={marketData?.market_data || []} lstmModel={lstmModel} />
+        </TabsContent>
+      </Tabs>
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <MarketDataSection marketData={marketData?.market_data || []} />
-        <AIAnalysisSection
-          prediction={marketData?.prediction}
-          riskAssessment={marketData?.risk_assessment}
-          sentiment={marketData?.market_sentiment}
-          marketData={marketData?.market_data || []}
-          onPredictionUpdate={setLstmPrediction}
-          onModelUpdate={setLstmModel}
-        />
-      </div>
-      <TradingSection
-        marketData={marketData?.market_data || []}
-        lstmPrediction={lstmPrediction}
-        riskMetrics={riskMetrics}
-        currentPosition={currentPosition}
-        onRiskMetricsUpdate={setRiskMetrics}
-      />
-      <AutomatedTrading
-        marketData={marketData?.market_data || []}
-        lstmPrediction={lstmPrediction}
-        riskMetrics={riskMetrics}
-        isEnabled={isAutomatedTradingEnabled}
-      />
-      <PerformanceSection trades={trades} performanceMetrics={performanceMetrics} />
-      <BacktestingSection marketData={marketData?.market_data || []} lstmModel={lstmModel} />
-      <DetailedDataVisualization marketData={marketData?.market_data || []} />
       <IntegrationTest marketData={marketData?.market_data || []} lstmModel={lstmModel} />
     </div>
   );
