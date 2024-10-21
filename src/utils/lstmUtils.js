@@ -125,3 +125,76 @@ export const continuousLearning = async (model, newData, setModelStatus) => {
   
   return model;
 };
+
+export const adaptiveModelSelection = async (marketData, setModelStatus) => {
+  const models = [
+    { name: 'LSTM', build: buildModel },
+    { name: 'GRU', build: buildGRUModel },
+    { name: 'CNN-LSTM', build: buildCNNLSTMModel },
+  ];
+
+  let bestModel = null;
+  let bestPerformance = Infinity;
+
+  for (const modelConfig of models) {
+    setModelStatus(`Testando modelo ${modelConfig.name}...`);
+    const model = modelConfig.build(60, 6, { units: 128, dropout: 0.2, learningRate: 0.001 });
+    const { normalizedData, dataMean, dataStd } = prepareData(marketData, ['close', 'volume', 'rsi', 'macd', 'atr', 'adx']);
+    const [xs, ys] = createSequences(normalizedData, 60);
+    await trainModel(model, xs, ys, { epochs: 50, batchSize: 32 }, setModelStatus);
+    const performance = evaluateModel(model, xs, ys).mse;
+
+    if (performance < bestPerformance) {
+      bestModel = model;
+      bestPerformance = performance;
+    }
+  }
+
+  setModelStatus(`Seleção de modelo concluída. Melhor modelo: ${bestModel.name}`);
+  return bestModel;
+};
+
+const buildGRUModel = (sequenceLength, featuresLength, hyperparams) => {
+  const model = tf.sequential();
+  model.add(tf.layers.gru({
+    units: hyperparams.units,
+    returnSequences: true,
+    inputShape: [sequenceLength, featuresLength]
+  }));
+  model.add(tf.layers.dropout(hyperparams.dropout));
+  model.add(tf.layers.gru({ units: hyperparams.units / 2, returnSequences: false }));
+  model.add(tf.layers.dropout(hyperparams.dropout));
+  model.add(tf.layers.dense({ units: 1 }));
+  
+  const optimizer = tf.train.adam(hyperparams.learningRate);
+  model.compile({
+    optimizer: optimizer,
+    loss: 'meanSquaredError',
+    metrics: ['mse']
+  });
+  
+  return model;
+};
+
+const buildCNNLSTMModel = (sequenceLength, featuresLength, hyperparams) => {
+  const model = tf.sequential();
+  model.add(tf.layers.conv1d({
+    filters: 64,
+    kernelSize: 3,
+    activation: 'relu',
+    inputShape: [sequenceLength, featuresLength]
+  }));
+  model.add(tf.layers.maxPooling1d({ poolSize: 2 }));
+  model.add(tf.layers.lstm({ units: hyperparams.units, returnSequences: false }));
+  model.add(tf.layers.dropout(hyperparams.dropout));
+  model.add(tf.layers.dense({ units: 1 }));
+  
+  const optimizer = tf.train.adam(hyperparams.learningRate);
+  model.compile({
+    optimizer: optimizer,
+    loss: 'meanSquaredError',
+    metrics: ['mse']
+  });
+  
+  return model;
+};

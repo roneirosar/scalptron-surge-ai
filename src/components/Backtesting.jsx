@@ -7,6 +7,7 @@ import BacktestingCharts from './Backtesting/BacktestingCharts';
 import { runBacktest } from '../utils/backtestingUtils';
 import { runMonteCarlo } from '../utils/monteCarloSimulation';
 import { optimizeHyperparameters } from '../utils/lstmUtils';
+import { toast } from 'sonner';
 
 const Backtesting = ({ marketData, lstmModel }) => {
   const [backtestResults, setBacktestResults] = useState(null);
@@ -29,17 +30,33 @@ const Backtesting = ({ marketData, lstmModel }) => {
 
   const handleRunBacktest = async () => {
     setIsRunning(true);
-    const results = await runBacktest(marketData, lstmModel, params);
-    const monteCarloResults = runMonteCarlo(results.trades, 1000);
-    setBacktestResults({ ...results, monteCarloResults });
-    setIsRunning(false);
+    toast.info('Iniciando backtesting...');
+    try {
+      const results = await runBacktest(marketData, lstmModel, params);
+      const monteCarloResults = runMonteCarlo(results.trades, 1000);
+      setBacktestResults({ ...results, monteCarloResults });
+      toast.success('Backtesting concluído com sucesso!');
+    } catch (error) {
+      console.error('Erro durante o backtesting:', error);
+      toast.error('Erro ao executar o backtesting');
+    } finally {
+      setIsRunning(false);
+    }
   };
 
   const handleOptimizeParameters = async () => {
     setIsRunning(true);
-    const optimizedParams = await optimizeBacktestParameters(marketData, lstmModel);
-    setParams(optimizedParams);
-    setIsRunning(false);
+    toast.info('Iniciando otimização de parâmetros...');
+    try {
+      const optimizedParams = await optimizeBacktestParameters(marketData, lstmModel);
+      setParams(optimizedParams);
+      toast.success('Parâmetros otimizados com sucesso!');
+    } catch (error) {
+      console.error('Erro durante a otimização de parâmetros:', error);
+      toast.error('Erro ao otimizar parâmetros');
+    } finally {
+      setIsRunning(false);
+    }
   };
 
   const optimizeBacktestParameters = async (marketData, lstmModel) => {

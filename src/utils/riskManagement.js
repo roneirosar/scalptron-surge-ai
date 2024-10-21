@@ -69,3 +69,20 @@ export const shouldClosePosition = (position, currentPrice, riskAssessment) => {
   if ((currentPrice - position.entryPrice) / position.entryPrice < -0.05) return true;
   return false;
 };
+
+export const dynamicRiskAdjustment = (capital, marketVolatility) => {
+  let baseRiskPerTrade = 0.01; // 1% risco base por trade
+  
+  if (marketVolatility > 0.03) {
+    baseRiskPerTrade *= 0.5; // Reduz o risco pela metade em mercados muito voláteis
+  } else if (marketVolatility < 0.01) {
+    baseRiskPerTrade *= 1.5; // Aumenta o risco em 50% em mercados menos voláteis
+  }
+  
+  return Math.min(baseRiskPerTrade, 0.02); // Limita o risco máximo a 2% do capital
+};
+
+export const calculateOptimalLeverage = (sharpeRatio, volatility) => {
+  const targetVolatility = 0.15; // 15% volatilidade alvo anual
+  return Math.min(targetVolatility / volatility, 3); // Limita a alavancagem máxima a 3x
+};

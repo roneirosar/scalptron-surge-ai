@@ -6,7 +6,8 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
-import { assessRisk, calculatePositionSize, adjustStopLoss, shouldClosePosition } from '../utils/riskManagement';
+import { assessRisk, calculatePositionSize, adjustStopLoss, shouldClosePosition, dynamicRiskAdjustment, calculateOptimalLeverage } from '../utils/riskManagement';
+import { toast } from 'sonner';
 
 const AutomatedTrading = ({ marketData, lstmPrediction, riskMetrics }) => {
   const [isAutomatedTradingEnabled, setIsAutomatedTradingEnabled] = useState(false);
@@ -30,9 +31,11 @@ const AutomatedTrading = ({ marketData, lstmPrediction, riskMetrics }) => {
     const currentPrice = marketData[marketData.length - 1].close;
     const priceChange = (prediction - currentPrice) / currentPrice;
     const riskAssessment = assessRisk(marketData, null, { volatilityIndex: riskMetrics.volatility * 100, trendStrength: 50 });
+    const dynamicRisk = dynamicRiskAdjustment(maxPositionSize, riskMetrics.volatility);
+    const optimalLeverage = calculateOptimalLeverage(riskMetrics.sharpeRatio, riskMetrics.volatility);
 
     if (priceChange > 0.01 && riskAssessment.riskLevel !== 'Alto' && riskAssessment.riskLevel !== 'Muito Alto') {
-      const positionSize = calculatePositionSize(maxPositionSize, 0.01, stopLoss / 100);
+      const positionSize = calculatePositionSize(maxPositionSize, dynamicRisk, stopLoss / 100) * optimalLeverage;
       return { 
         action: 'BUY', 
         price: currentPrice, 
@@ -42,7 +45,7 @@ const AutomatedTrading = ({ marketData, lstmPrediction, riskMetrics }) => {
         size: positionSize
       };
     } else if (priceChange < -0.01 && riskAssessment.riskLevel !== 'Alto' && riskAssessment.riskLevel !== 'Muito Alto') {
-      const positionSize = calculatePositionSize(maxPositionSize, 0.01, stopLoss / 100);
+      const positionSize = calculatePositionSize(maxPositionSize, dynamicRisk, stopLoss / 100) * optimalLeverage;
       return { 
         action: 'SELL', 
         price: currentPrice, 
@@ -67,6 +70,7 @@ const AutomatedTrading = ({ marketData, lstmPrediction, riskMetrics }) => {
       stopLoss: decision.stopLoss,
       takeProfit: decision.takeProfit
     }]);
+    toast.success(`Trade executado: ${decision.action} a ${decision.price}`);
   };
 
   const equityCurve = trades.map((trade, index) => ({
