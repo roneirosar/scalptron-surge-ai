@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchMarketData } from '../utils/apiService';
 import { calculateIndicators } from '../utils/technicalIndicators';
-import { continuousLearning } from '../utils/lstmUtils';
+import { optimizeLSTM, continuousLearning } from '../utils/lstmUtils';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 

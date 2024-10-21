@@ -17,6 +17,7 @@ const AutomatedTrading = ({ marketData, lstmPrediction, riskMetrics }) => {
   const [maxPositionSize, setMaxPositionSize] = useState(1000);
   const [tradingStrategy, setTradingStrategy] = useState('conservative');
   const [trailingStop, setTrailingStop] = useState(1);
+  const [currentPosition, setCurrentPosition] = useState(null);
 
   useEffect(() => {
     if (isAutomatedTradingEnabled && marketData && lstmPrediction && riskMetrics) {
@@ -30,7 +31,7 @@ const AutomatedTrading = ({ marketData, lstmPrediction, riskMetrics }) => {
   const makeTradeDecision = (marketData, prediction, riskMetrics) => {
     const currentPrice = marketData[marketData.length - 1].close;
     const priceChange = (prediction - currentPrice) / currentPrice;
-    const riskAssessment = assessRisk(marketData, null, { volatilityIndex: riskMetrics.volatility * 100, trendStrength: 50 });
+    const riskAssessment = assessRisk(marketData, currentPosition, { volatilityIndex: riskMetrics.volatility * 100, trendStrength: 50 });
     const dynamicRisk = dynamicRiskAdjustment(maxPositionSize, riskMetrics.volatility);
     const optimalLeverage = calculateOptimalLeverage(riskMetrics.sharpeRatio, riskMetrics.volatility);
 
