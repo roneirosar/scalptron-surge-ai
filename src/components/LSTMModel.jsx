@@ -34,7 +34,7 @@ const LSTMModel = ({ marketData, onPredictionUpdate, onModelUpdate }) => {
       const optimizedModel = await optimizeHyperparameters(trainXs, trainYs, setModelStatus);
       
       setModelStatus('Treinando modelo otimizado');
-      await trainModel(optimizedModel, trainXs, trainYs, setModelStatus);
+      await trainModel(optimizedModel, trainXs, trainYs, { epochs: 100, batchSize: 32 }, setModelStatus);
       
       setModelStatus('Avaliando modelo');
       const performance = evaluateModel(optimizedModel, testXs, testYs);
