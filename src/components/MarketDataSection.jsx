@@ -4,9 +4,20 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { TrendingUp, TrendingDown, DollarSign, BarChart2 } from 'lucide-react';
 
 const MarketDataSection = ({ marketData }) => {
+  if (!marketData || marketData.length === 0) {
+    return (
+      <Card>
+        <CardContent>
+          <p>Nenhum dado de mercado disponível no momento.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const latestData = marketData[marketData.length - 1];
-  const priceChange = latestData.close - marketData[marketData.length - 2].close;
-  const priceChangePercentage = (priceChange / marketData[marketData.length - 2].close) * 100;
+  const previousData = marketData[marketData.length - 2];
+  const priceChange = latestData.close - previousData.close;
+  const priceChangePercentage = (priceChange / previousData.close) * 100;
 
   return (
     <div className="space-y-6">
