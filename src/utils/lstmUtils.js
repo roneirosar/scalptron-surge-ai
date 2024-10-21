@@ -115,7 +115,6 @@ export const optimizeHyperparameters = async (xs, ys, setModelStatus) => {
   return bestModel;
 };
 
-// Novo método para aprendizado contínuo
 export const continuousLearning = async (model, newData, setModelStatus) => {
   const { normalizedData, dataMean, dataStd } = prepareData(newData, ['close', 'volume', 'rsi', 'macd', 'atr', 'adx']);
   const [xs, ys] = createSequences(normalizedData, 60);
