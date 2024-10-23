@@ -12,6 +12,16 @@ export const calculateTakeProfit = (entryPrice, stopLoss, riskRewardRatio = 2) =
   return entryPrice + (risk * riskRewardRatio);
 };
 
+export const adjustStopLoss = (currentPrice, entryPrice, initialStopLoss, trailingPercent) => {
+  const priceMove = currentPrice - entryPrice;
+  const trailingStop = currentPrice * (1 - trailingPercent / 100);
+  
+  if (priceMove > 0) {
+    return Math.max(initialStopLoss, trailingStop);
+  }
+  return initialStopLoss;
+};
+
 export const assessRisk = (marketData, currentPosition, marketConditions) => {
   const volatility = calculateVolatility(marketData);
   const valueAtRisk = calculateVaR(marketData, 0.95);
