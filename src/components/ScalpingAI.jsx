@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { fetchMarketData } from '../utils/apiService';
+import { fetchMarketData, checkMT5Connection } from '../utils/apiService';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
-import { AlertCircle, CheckCircle2, Timer } from "lucide-react";
+import { CheckCircle2, Timer, AlertCircle } from "lucide-react";
+import SystemStatusCard from './SystemStatusCard';
 
 const ProjectStatus = {
   COMPLETED: 'completed',
@@ -28,13 +28,24 @@ const ScalpingAI = () => {
     queryKey: ['marketData'],
     queryFn: fetchMarketData,
     refetchInterval: 5000,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 30000)
   });
 
   useEffect(() => {
-    if (error) {
-      toast.error("Erro ao carregar dados do mercado");
-    }
-  }, [error]);
+    const checkConnection = async () => {
+      try {
+        await checkMT5Connection();
+      } catch (error) {
+        toast.error("Erro na conexão com MT5. Verificando conexão...");
+      }
+    };
+
+    checkConnection();
+    const interval = setInterval(checkConnection, 30000); // Verifica a cada 30 segundos
+
+    return () => clearInterval(interval);
+  }, []);
 
   const getStatusIcon = (status) => {
     switch (status) {
