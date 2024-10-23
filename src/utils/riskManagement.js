@@ -1,15 +1,22 @@
-import { calculateVolatility, calculateVaR, calculateSharpeRatio } from './riskCalculations';
+export const calculatePositionSize = (capital, riskPerTrade, stopLoss, volatility) => {
+  // Ajusta o risco baseado na volatilidade
+  const adjustedRisk = riskPerTrade * (1 - volatility);
+  return (capital * adjustedRisk) / stopLoss;
+};
 
-export const assessRisk = (historicalData, currentPosition, marketConditions) => {
-  const returns = historicalData.map(d => d.close).pct_change().dropna();
-  
-  const volatility = calculateVolatility(returns);
-  const valueAtRisk = calculateVaR(returns, 0.95);
-  const sharpeRatio = calculateSharpeRatio(returns);
-  
-  const currentPrice = historicalData[historicalData.length - 1].close;
-  const rsi = historicalData[historicalData.length - 1].rsi;
-  const macd = historicalData[historicalData.length - 1].macd;
+export const calculateStopLoss = (entryPrice, atr, riskMultiplier = 2) => {
+  return entryPrice - (atr * riskMultiplier);
+};
+
+export const calculateTakeProfit = (entryPrice, stopLoss, riskRewardRatio = 2) => {
+  const risk = Math.abs(entryPrice - stopLoss);
+  return entryPrice + (risk * riskRewardRatio);
+};
+
+export const assessRisk = (marketData, currentPosition, marketConditions) => {
+  const volatility = calculateVolatility(marketData);
+  const valueAtRisk = calculateVaR(marketData, 0.95);
+  const sharpeRatio = calculateSharpeRatio(marketData);
   
   let riskScore = 0;
   
@@ -25,64 +32,48 @@ export const assessRisk = (historicalData, currentPosition, marketConditions) =>
   if (sharpeRatio < 0.5) riskScore += 2;
   else if (sharpeRatio < 1) riskScore += 1;
   
-  // Avaliação baseada em indicadores técnicos
-  if (rsi > 70 || rsi < 30) riskScore += 1;
-  if (macd < 0) riskScore += 1;
-  
-  // Avaliação baseada na posição atual
-  if (currentPosition) {
-    const unrealizedPnL = (currentPrice - currentPosition.entryPrice) * currentPosition.size;
-    if (unrealizedPnL < -currentPosition.entryPrice * 0.02) riskScore += 1;
-  }
-  
-  // Avaliação baseada nas condições de mercado
+  // Avaliação das condições de mercado
   if (marketConditions.volatilityIndex > 25) riskScore += 1;
   if (marketConditions.trendStrength < 20) riskScore += 1;
   
-  let riskLevel;
-  if (riskScore >= 8) riskLevel = 'Muito Alto';
-  else if (riskScore >= 6) riskLevel = 'Alto';
-  else if (riskScore >= 4) riskLevel = 'Médio';
-  else if (riskScore >= 2) riskLevel = 'Baixo';
-  else riskLevel = 'Muito Baixo';
-  
   return {
-    riskLevel,
-    riskScore,
+    riskLevel: getRiskLevel(riskScore),
     volatility,
     valueAtRisk,
-    sharpeRatio
+    sharpeRatio,
+    riskScore
   };
 };
 
-export const calculatePositionSize = (capital, riskPerTrade, stopLoss) => {
-  return (capital * riskPerTrade) / stopLoss;
+const getRiskLevel = (riskScore) => {
+  if (riskScore >= 6) return 'Alto';
+  if (riskScore >= 3) return 'Médio';
+  return 'Baixo';
 };
 
-export const adjustStopLoss = (currentPrice, entryPrice, atr) => {
-  const stopDistance = Math.max(2 * atr, 0.02 * entryPrice);
-  return currentPrice - stopDistance;
+const calculateVolatility = (marketData) => {
+  const returns = marketData.slice(1).map((price, i) => 
+    (price - marketData[i]) / marketData[i]
+  );
+  return Math.sqrt(returns.reduce((sum, r) => sum + r * r, 0) / returns.length);
 };
 
-export const shouldClosePosition = (position, currentPrice, riskAssessment) => {
-  if (riskAssessment.riskLevel === 'Muito Alto') return true;
-  if ((currentPrice - position.entryPrice) / position.entryPrice < -0.05) return true;
-  return false;
+const calculateVaR = (marketData, confidence) => {
+  const returns = marketData.slice(1).map((price, i) => 
+    (price - marketData[i]) / marketData[i]
+  );
+  const sortedReturns = returns.sort((a, b) => a - b);
+  const index = Math.floor((1 - confidence) * sortedReturns.length);
+  return -sortedReturns[index];
 };
 
-export const dynamicRiskAdjustment = (capital, marketVolatility) => {
-  let baseRiskPerTrade = 0.01; // 1% risco base por trade
-  
-  if (marketVolatility > 0.03) {
-    baseRiskPerTrade *= 0.5; // Reduz o risco pela metade em mercados muito voláteis
-  } else if (marketVolatility < 0.01) {
-    baseRiskPerTrade *= 1.5; // Aumenta o risco em 50% em mercados menos voláteis
-  }
-  
-  return Math.min(baseRiskPerTrade, 0.02); // Limita o risco máximo a 2% do capital
-};
-
-export const calculateOptimalLeverage = (sharpeRatio, volatility) => {
-  const targetVolatility = 0.15; // 15% volatilidade alvo anual
-  return Math.min(targetVolatility / volatility, 3); // Limita a alavancagem máxima a 3x
+const calculateSharpeRatio = (marketData) => {
+  const returns = marketData.slice(1).map((price, i) => 
+    (price - marketData[i]) / marketData[i]
+  );
+  const avgReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
+  const stdDev = Math.sqrt(returns.reduce((sum, r) => 
+    sum + Math.pow(r - avgReturn, 2), 0) / returns.length
+  );
+  return avgReturn / stdDev * Math.sqrt(252); // Anualizado
 };
