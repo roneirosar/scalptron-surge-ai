@@ -51,6 +51,34 @@ const BacktestingForm = ({ params, handleParamChange, onOptimize }) => (
         />
         <span className="text-sm">{params.maxRiskPerTrade.toFixed(1)}%</span>
       </div>
+      <div>
+        <Label>Stop Loss (%)</Label>
+        <Slider
+          name="stopLoss"
+          min={0.5}
+          max={5}
+          step={0.1}
+          value={[params.stopLoss]}
+          onValueChange={(value) => handleParamChange({ 
+            target: { name: 'stopLoss', value: value[0] } 
+          })}
+        />
+        <span className="text-sm">{params.stopLoss.toFixed(1)}%</span>
+      </div>
+      <div>
+        <Label>Take Profit (%)</Label>
+        <Slider
+          name="takeProfit"
+          min={1}
+          max={10}
+          step={0.1}
+          value={[params.takeProfit]}
+          onValueChange={(value) => handleParamChange({ 
+            target: { name: 'takeProfit', value: value[0] } 
+          })}
+        />
+        <span className="text-sm">{params.takeProfit.toFixed(1)}%</span>
+      </div>
     </div>
     <Button onClick={onOptimize} className="w-full">
       Otimizar Parâmetros
