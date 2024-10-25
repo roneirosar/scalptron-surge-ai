@@ -3,78 +3,42 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ComposedChart, Bar, Area } from 'recharts';
 
 const DetailedDataVisualization = ({ marketData }) => {
+  if (!marketData?.market_data?.length) return null;
+
   return (
-    <Card>
+    <Card className="mb-6">
       <CardHeader>
-        <CardTitle>Visualização Detalhada dos Dados</CardTitle>
+        <CardTitle>Análise Detalhada do Mercado</CardTitle>
       </CardHeader>
       <CardContent>
-        <ComposedChart width={600} height={400} data={marketData}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="date" />
-          <YAxis yAxisId="left" />
-          <YAxis yAxisId="right" orientation="right" />
-          <Tooltip />
-          <Legend />
-          <Line yAxisId="left" type="monotone" dataKey="close" stroke="#8884d8" name="Preço de Fechamento" />
-          <Bar yAxisId="right" dataKey="volume" fill="#82ca9d" name="Volume" />
-          <Area yAxisId="left" type="monotone" dataKey="sma20" stroke="#ffc658" fill="#ffc658" fillOpacity={0.3} name="SMA 20" />
-          <Line yAxisId="left" type="monotone" dataKey="ema20" stroke="#ff7300" name="EMA 20" />
-        </ComposedChart>
-        
-        <LineChart width={600} height={300} data={marketData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="date" />
-          <YAxis />
-          <Tooltip />
-          <Legend />
-          <Line type="monotone" dataKey="upperBB" stroke="#8884d8" name="Banda Superior" />
-          <Line type="monotone" dataKey="middleBB" stroke="#82ca9d" name="Banda Média" />
-          <Line type="monotone" dataKey="lowerBB" stroke="#ffc658" name="Banda Inferior" />
-          <Line type="monotone" dataKey="close" stroke="#ff7300" name="Preço de Fechamento" />
-        </LineChart>
-        
-        <LineChart width={600} height={300} data={marketData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="date" />
-          <YAxis />
-          <Tooltip />
-          <Legend />
-          <Line type="monotone" dataKey="rsi" stroke="#8884d8" name="RSI" />
-          <Line type="monotone" dataKey="stochRSI_K" stroke="#82ca9d" name="Stochastic RSI K" />
-          <Line type="monotone" dataKey="stochRSI_D" stroke="#ffc658" name="Stochastic RSI D" />
-        </LineChart>
-        
-        <LineChart width={600} height={300} data={marketData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="date" />
-          <YAxis />
-          <Tooltip />
-          <Legend />
-          <Line type="monotone" dataKey="macd" stroke="#8884d8" name="MACD" />
-          <Line type="monotone" dataKey="macdSignal" stroke="#82ca9d" name="Sinal MACD" />
-          <Bar dataKey="macdHistogram" fill="#ffc658" name="Histograma MACD" />
-        </LineChart>
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Preço e Volume</h3>
+            <ComposedChart width={800} height={400} data={marketData.market_data}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="time" />
+              <YAxis yAxisId="left" />
+              <YAxis yAxisId="right" orientation="right" />
+              <Tooltip />
+              <Legend />
+              <Line yAxisId="left" type="monotone" dataKey="close" stroke="#8884d8" name="Preço" />
+              <Bar yAxisId="right" dataKey="volume" fill="#82ca9d" name="Volume" />
+            </ComposedChart>
+          </div>
 
-        <LineChart width={600} height={300} data={marketData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="date" />
-          <YAxis />
-          <Tooltip />
-          <Legend />
-          <Line type="monotone" dataKey="atr" stroke="#8884d8" name="ATR" />
-        </LineChart>
-
-        <LineChart width={600} height={300} data={marketData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="date" />
-          <YAxis />
-          <Tooltip />
-          <Legend />
-          <Line type="monotone" dataKey="adx" stroke="#8884d8" name="ADX" />
-          <Line type="monotone" dataKey="plusDI" stroke="#82ca9d" name="+DI" />
-          <Line type="monotone" dataKey="minusDI" stroke="#ffc658" name="-DI" />
-        </LineChart>
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Indicadores Técnicos</h3>
+            <LineChart width={800} height={300} data={marketData.market_data}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="time" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Line type="monotone" dataKey="rsi" stroke="#8884d8" name="RSI" />
+              <Line type="monotone" dataKey="macd" stroke="#82ca9d" name="MACD" />
+            </LineChart>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
