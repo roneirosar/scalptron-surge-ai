@@ -1,7 +1,7 @@
 import asyncio
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from mt5_manager import mt5_manager
+from backend.mt5_manager import mt5_manager
 import MetaTrader5 as mt5
 
 app = FastAPI()
@@ -9,7 +9,7 @@ app = FastAPI()
 # Configuração do CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Permite todas as origens em desenvolvimento
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -40,7 +40,6 @@ async def get_market_data(symbol: str, timeframe: str = "M5", num_candles: int =
     if data is None:
         raise HTTPException(status_code=503, detail="Failed to get market data")
     
-    # Converter dados para formato adequado para o frontend
     market_data = []
     for candle in data:
         market_data.append({

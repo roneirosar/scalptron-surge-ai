@@ -1,1 +1,1 @@
-# Este arquivo pode ficar vazio
+# Este arquivo pode ficar vazio, ele apenas marca o diretório como um módulo Python
