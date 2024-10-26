@@ -1,12 +1,12 @@
 import asyncio
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from mt5_manager import mt5_manager
+from .mt5_manager import mt5_manager
 import MetaTrader5 as mt5
 
 app = FastAPI()
 
-# Configuração do CORS mais permissiva para desenvolvimento
+# Configuração do CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Permite todas as origens em desenvolvimento
