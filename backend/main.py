@@ -1,7 +1,7 @@
 import asyncio
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from .mt5_manager import mt5_manager
+from backend.mt5_manager import mt5_manager
 import MetaTrader5 as mt5
 
 app = FastAPI()
