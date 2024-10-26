@@ -6,9 +6,10 @@ import MetaTrader5 as mt5
 
 app = FastAPI()
 
+# Configuração do CORS mais permissiva para desenvolvimento
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["*"],  # Permite todas as origens em desenvolvimento
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -23,7 +24,6 @@ async def get_mt5_status():
 
 @app.get("/market-data/{symbol}")
 async def get_market_data(symbol: str, timeframe: str = "M5", num_candles: int = 1000):
-    # Converter string do timeframe para constante do MT5
     timeframe_map = {
         "M1": mt5.TIMEFRAME_M1,
         "M5": mt5.TIMEFRAME_M5,
@@ -40,7 +40,24 @@ async def get_market_data(symbol: str, timeframe: str = "M5", num_candles: int =
     if data is None:
         raise HTTPException(status_code=503, detail="Failed to get market data")
     
-    return {"data": data.tolist()}
+    # Converter dados para formato adequado para o frontend
+    market_data = []
+    for candle in data:
+        market_data.append({
+            "time": candle[0],
+            "open": candle[1],
+            "high": candle[2],
+            "low": candle[3],
+            "close": candle[4],
+            "volume": candle[5],
+            "spread": candle[6]
+        })
+    
+    return {
+        "market_data": market_data,
+        "symbol": symbol,
+        "timeframe": timeframe
+    }
 
 if __name__ == "__main__":
     import uvicorn
