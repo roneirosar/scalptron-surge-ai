@@ -1,4 +1,3 @@
-import asyncio
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from backend.mt5_manager import mt5_manager
@@ -14,6 +13,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/health")
+async def health_check():
+    try:
+        if not mt5_manager.connected:
+            return {"status": "error", "message": "MT5 não está conectado"}
+        return {"status": "ok", "message": "Servidor está funcionando"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/mt5-status")
 async def get_mt5_status():
